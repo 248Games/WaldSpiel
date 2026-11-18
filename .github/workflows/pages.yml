@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Spiel zusammenstellen
-        run: mkdir _site && cp -r index.html style.css js fonts CNAME _site/
+        run: mkdir _site && cp -r index.html style.css js fonts _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

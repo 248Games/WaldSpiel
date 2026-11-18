@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wald-Leiternspiel</title>
+  <meta name="description" content="Ein Leiternspiel mit Fragen statt Würfel: Was würde mit Wirtschaft und Gesellschaft passieren, wenn es in Deutschland keinen Wald mehr gäbe?">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="seite">
+    <header class="kopf">
+      <div class="kopf__text">
+        <h1 class="kopf__titel">Wald-Leiternspiel</h1>
+        <p class="kopf__frage">
+          <span class="etikett">Forschungsfrage</span>
+          <span id="research-question"></span>
+        </p>
+      </div>
+      <nav class="kopf__knoepfe" aria-label="Spiel">
+        <button type="button" class="knopf" id="btn-rules">Regeln</button>
+        <button type="button" class="knopf" id="btn-conclusion">Fazit</button>
+        <button type="button" class="knopf" id="btn-new">Neues Spiel</button>
+      </nav>
+    </header>
+
+    <main class="tisch">
+      <figure class="brett-rahmen">
+        <svg id="board" class="brett" viewBox="0 0 700 700" role="img"></svg>
+        <figcaption class="legende">
+          <span class="legende__eintrag">
+            <svg class="legende__bild" viewBox="0 0 28 28" aria-hidden="true">
+              <path class="leiter__kante" d="M9 3V25M19 3V25M9 8H19M9 14H19M9 20H19"/>
+              <path class="leiter__holz" d="M9 3V25M19 3V25M9 8H19M9 14H19M9 20H19"/>
+            </svg>
+            Leiter: Das gibt uns der Wald.
+          </span>
+          <span class="legende__eintrag">
+            <svg class="legende__bild" viewBox="0 0 28 28" aria-hidden="true">
+              <path class="rutsche__kante" d="M8 5Q20 12 20 23"/>
+              <path class="rutsche__erde" d="M8 5Q20 12 20 23"/>
+            </svg>
+            Rutsche: Das passiert ohne Wald.
+          </span>
+        </figcaption>
+      </figure>
+
+      <div class="pult">
+        <section id="setup" class="pult__teil" aria-labelledby="setup-title">
+          <h2 id="setup-title">Wer spielt mit?</h2>
+
+          <fieldset class="anzahl">
+            <legend>Spieler oder Teams</legend>
+            <div class="anzahl__wahl">
+              <input type="radio" name="count" id="count-1" value="1"><label for="count-1">1</label>
+              <input type="radio" name="count" id="count-2" value="2" checked><label for="count-2">2</label>
+              <input type="radio" name="count" id="count-3" value="3"><label for="count-3">3</label>
+              <input type="radio" name="count" id="count-4" value="4"><label for="count-4">4</label>
+            </div>
+          </fieldset>
+
+          <div class="namen" id="names">
+            <div class="namen__zeile" data-player="0">
+              <label class="sr-only" for="name-0">Name mit Wegzeichen Punkt</label>
+              <input type="text" id="name-0" maxlength="20" placeholder="Team 1" autocomplete="off">
+            </div>
+            <div class="namen__zeile" data-player="1">
+              <label class="sr-only" for="name-1">Name mit Wegzeichen Kreuz</label>
+              <input type="text" id="name-1" maxlength="20" placeholder="Team 2" autocomplete="off">
+            </div>
+            <div class="namen__zeile" data-player="2">
+              <label class="sr-only" for="name-2">Name mit Wegzeichen Raute</label>
+              <input type="text" id="name-2" maxlength="20" placeholder="Team 3" autocomplete="off">
+            </div>
+            <div class="namen__zeile" data-player="3">
+              <label class="sr-only" for="name-3">Name mit Wegzeichen Dreieck</label>
+              <input type="text" id="name-3" maxlength="20" placeholder="Team 4" autocomplete="off">
+            </div>
+          </div>
+
+          <button type="button" class="knopf knopf--haupt knopf--gross" id="btn-start">Spiel starten</button>
+
+          <div class="kurzregeln">
+            <h3>So geht’s</h3>
+            <ul>
+              <li>Statt zu würfeln wählst du eine Fragekarte: leicht, mittel oder schwer.</li>
+              <li>Stimmt deine Antwort, rückst du so viele Felder vor, wie auf der Karte steht. Sonst bleibst du stehen.</li>
+              <li>Leitern bringen dich nach oben, Rutschen zurück. Wer zuerst Feld 49 erreicht, gewinnt.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="turn" class="pult__teil" aria-labelledby="turn-who" hidden>
+          <h2 class="zug__wer" id="turn-who"></h2>
+          <p class="zug__hinweis" id="turn-hint"></p>
+          <div class="karten" id="cards"></div>
+          <div class="zug__knoepfe" id="over-actions" hidden>
+            <button type="button" class="knopf knopf--haupt" id="btn-show-result">Ergebnis ansehen</button>
+            <button type="button" class="knopf" id="btn-rematch-panel">Noch eine Runde</button>
+          </div>
+          <p class="meldung" id="status" role="status"></p>
+        </section>
+
+        <section id="standings-section" class="pult__teil" aria-labelledby="standings-title" hidden>
+          <h2 class="etikett" id="standings-title">Spielstand</h2>
+          <ol class="stand" id="standings"></ol>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="dlg-question" class="dlg" aria-labelledby="question-text">
+    <div class="frage__kopf">
+      <span class="chip" id="question-topic"></span>
+      <span class="frage__wert" id="question-worth"></span>
+      <span class="frage__wer" id="question-who"></span>
+    </div>
+    <h2 class="frage__text" id="question-text" tabindex="-1" autofocus></h2>
+    <div class="antworten" id="answers"></div>
+    <div class="aufloesung" id="reveal" hidden>
+      <p class="aufloesung__urteil" id="reveal-verdict"></p>
+      <p class="aufloesung__text" id="reveal-text"></p>
+      <button type="button" class="knopf knopf--haupt knopf--gross" id="btn-continue"></button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-event" class="dlg dlg--ereignis" aria-labelledby="event-title">
+    <svg class="ereignis__bild" id="event-art" viewBox="0 0 120 84" aria-hidden="true"></svg>
+    <p class="etikett" id="event-kind"></p>
+    <h2 class="dlg__titel" id="event-title"></h2>
+    <p id="event-text"></p>
+    <button type="button" class="knopf knopf--haupt knopf--gross" id="btn-event"></button>
+  </dialog>
+
+  <dialog id="dlg-over" class="dlg dlg--breit" aria-labelledby="over-title">
+    <p class="etikett" id="over-rounds"></p>
+    <h2 class="dlg__titel" id="over-title"></h2>
+    <ol class="stand" id="over-standings"></ol>
+    <div class="dlg__knoepfe">
+      <button type="button" class="knopf knopf--haupt" id="btn-rematch">Noch eine Runde</button>
+      <button type="button" class="knopf" id="btn-new-teams">Neue Teams</button>
+      <button type="button" class="knopf" data-close>Brett ansehen</button>
+    </div>
+    <section class="fazit" aria-labelledby="over-conclusion-title">
+      <p class="etikett">Antwort auf die Forschungsfrage</p>
+      <h3 class="fazit__frage" id="over-conclusion-title"></h3>
+      <div class="fazit__inhalt" data-conclusion></div>
+    </section>
+  </dialog>
+
+  <dialog id="dlg-conclusion" class="dlg dlg--breit" aria-labelledby="conclusion-title">
+    <section class="fazit">
+      <p class="etikett">Antwort auf die Forschungsfrage</p>
+      <h2 class="fazit__frage" id="conclusion-title"></h2>
+      <div class="fazit__inhalt" data-conclusion></div>
+    </section>
+    <div class="dlg__knoepfe">
+      <button type="button" class="knopf knopf--haupt" data-close>Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-rules" class="dlg dlg--breit" aria-labelledby="rules-title">
+    <h2 class="dlg__titel" id="rules-title">Regeln</h2>
+    <ul class="regeln">
+      <li>Alle starten auf Feld 1. Wer zuerst Feld 49 erreicht, gewinnt.</li>
+      <li>Statt zu würfeln wählst du eine Fragekarte: leicht, mittel oder schwer. Auf jeder Karte steht, wie viele Felder sie wert ist.</li>
+      <li>Stimmt deine Antwort, rückst du so viele Felder vor. Ist sie falsch, bleibst du stehen.</li>
+      <li>Landest du am Fuß einer Leiter, kletterst du hoch. Landest du am Anfang einer Rutsche, rutschst du zurück.</li>
+      <li>Leitern zeigen, was der Wald uns gibt. Rutschen zeigen, was ohne Wald passieren würde.</li>
+      <li>Ihr könnt allein, zu zweit oder in bis zu vier Teams spielen.</li>
+    </ul>
+    <h3>Quellen der Zahlen</h3>
+    <ul class="quellen" id="sources"></ul>
+    <div class="dlg__knoepfe">
+      <button type="button" class="knopf knopf--haupt" data-close>Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-confirm" class="dlg" aria-labelledby="confirm-title">
+    <h2 class="dlg__titel" id="confirm-title">Neues Spiel beginnen?</h2>
+    <p>Der aktuelle Spielstand geht dabei verloren.</p>
+    <div class="dlg__knoepfe">
+      <button type="button" class="knopf knopf--haupt" id="btn-confirm-new">Neues Spiel</button>
+      <button type="button" class="knopf" data-close>Weiterspielen</button>
+    </div>
+  </dialog>
+
+  <script src="js/content.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1216 @@
+/*
+ * Wald-Leiternspiel
+ *
+ * Layout: links das Brett als quadratische Forstkarte, rechts das Pult mit den
+ * Fragekarten und dem Spielstand. Auf dem Handy liegt das Pult unter dem Brett.
+ */
+
+@font-face {
+  font-family: "Alfa Slab One";
+  src: url("fonts/alfa-slab-one-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lexend";
+  src: url("fonts/lexend-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lexend";
+  src: url("fonts/lexend-latin-600-normal.woff2") format("woff2");
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Farben und Schrift: Tag im Wald ─────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  --grund: #e9eee2;          /* Seite: Morgennebel */
+  --flaeche: #fafbf6;        /* Pult und Dialoge */
+  --flaeche-tief: #edf1e6;   /* Karten, Eingabefelder */
+  --tinte: #15231a;
+  --tinte-leise: #4c5d51;
+  --linie: #c5cfbd;
+
+  --gruen: #1d5c39;          /* Hauptknopf */
+  --auf-gruen: #ffffff;
+  --signal: #d2440c;         /* Sprühfarbe der Förster: wer dran ist, wohin es geht */
+  --auf-signal: #ffffff;
+
+  --wald-a: #bbd5a3;         /* Felder wie auf einer Wanderkarte */
+  --wald-b: #a7c78f;
+  --wald-zeichen: #3d6a3a;
+  --feld-tinte: #1c3823;
+  --lichtung: #e7eea6;       /* Feld am Fuß einer Leiter */
+  --kahl: #e7cba0;           /* Feld am Anfang einer Rutsche */
+
+  --holz: #c08033;
+  --holz-kante: #54310d;
+  --erde: #c5532a;
+  --erde-kante: #67260f;
+  --erde-licht: #f6cdb3;
+
+  --richtig: #1b7340;
+  --richtig-flaeche: #dcefdd;
+  --falsch: #b3261e;
+  --falsch-flaeche: #f8ddd9;
+
+  --platte: #ffffff;         /* Wegzeichen: weiße Platte wie am Baum */
+  --platte-kante: #15231a;
+  --marke-0: #d12b2b;
+  --marke-1: #1d5fc2;
+  --marke-2: #d99a00;
+  --marke-3: #2b8a3e;
+
+  --schatten: 0 1px 2px rgb(21 35 26 / 0.1), 0 10px 28px rgb(21 35 26 / 0.12);
+
+  --schrift-titel: "Alfa Slab One", Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, serif;
+  --schrift-text: "Lexend", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  --t-klein: 0.78125rem;
+  --t-leise: 0.90625rem;
+  --t-text: 1rem;
+  --t-gross: 1.25rem;
+  --t-titel: 1.5rem;
+  --t-marke: 2rem;
+}
+
+/* ── Nacht im Wald ───────────────────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --grund: #0e1712;
+    --flaeche: #17231b;
+    --flaeche-tief: #1f2e24;
+    --tinte: #e8f0e4;
+    --tinte-leise: #a3b5a8;
+    --linie: #33463a;
+    --gruen: #8ad398;
+    --auf-gruen: #0c1a11;
+    --signal: #ff8f47;
+    --auf-signal: #1f0d02;
+    --wald-a: #2c573b;
+    --wald-b: #244b32;
+    --wald-zeichen: #86b58a;
+    --feld-tinte: #dcebd6;
+    --lichtung: #5d6f2c;
+    --kahl: #6f5536;
+    --holz: #e0aa60;
+    --holz-kante: #2a1806;
+    --erde: #e37443;
+    --erde-kante: #37150a;
+    --erde-licht: #fbd9c4;
+    --richtig: #86d79d;
+    --richtig-flaeche: #1c3a27;
+    --falsch: #f49b93;
+    --falsch-flaeche: #45211e;
+    --platte: #f5f7ef;
+    --platte-kante: #0a110d;
+    --schatten: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --grund: #0e1712;
+  --flaeche: #17231b;
+  --flaeche-tief: #1f2e24;
+  --tinte: #e8f0e4;
+  --tinte-leise: #a3b5a8;
+  --linie: #33463a;
+  --gruen: #8ad398;
+  --auf-gruen: #0c1a11;
+  --signal: #ff8f47;
+  --auf-signal: #1f0d02;
+  --wald-a: #2c573b;
+  --wald-b: #244b32;
+  --wald-zeichen: #86b58a;
+  --feld-tinte: #dcebd6;
+  --lichtung: #5d6f2c;
+  --kahl: #6f5536;
+  --holz: #e0aa60;
+  --holz-kante: #2a1806;
+  --erde: #e37443;
+  --erde-kante: #37150a;
+  --erde-licht: #fbd9c4;
+  --richtig: #86d79d;
+  --richtig-flaeche: #1c3a27;
+  --falsch: #f49b93;
+  --falsch-flaeche: #45211e;
+  --platte: #f5f7ef;
+  --platte-kante: #0a110d;
+  --schatten: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+}
+
+/* ── Grundlagen ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--grund);
+  color: var(--tinte);
+  font-family: var(--schrift-text);
+  font-size: var(--t-text);
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure,
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+fieldset {
+  border: 0;
+  min-width: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.etikett {
+  font-size: var(--t-klein);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinte-leise);
+}
+
+/* ── Seite und Kopf ──────────────────────────────────────────────────────── */
+
+.seite {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding-block: 18px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 18px;
+}
+
+.kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 28px;
+}
+
+.kopf__text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 24rem;
+}
+
+.kopf__titel {
+  font-family: var(--schrift-titel);
+  font-weight: 400;
+  font-size: var(--t-marke);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: var(--gruen);
+}
+
+.kopf__frage {
+  display: grid;
+  gap: 2px;
+  max-width: 44rem;
+  font-size: var(--t-text);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.kopf__knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Knöpfe ──────────────────────────────────────────────────────────────── */
+
+.knopf {
+  appearance: none;
+  border: 1.5px solid var(--linie);
+  border-radius: 999px;
+  background: transparent;
+  padding: 8px 16px;
+  font-size: var(--t-leise);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms, transform 120ms;
+}
+
+.knopf:hover {
+  border-color: var(--tinte-leise);
+  background: var(--flaeche-tief);
+}
+
+.knopf:active {
+  transform: translateY(1px);
+}
+
+.knopf--haupt {
+  border-color: var(--gruen);
+  background: var(--gruen);
+  color: var(--auf-gruen);
+}
+
+.knopf--haupt:hover {
+  border-color: var(--gruen);
+  background: var(--gruen);
+  filter: brightness(1.08);
+}
+
+.knopf--gross {
+  padding: 13px 22px;
+  font-size: var(--t-text);
+  border-radius: 14px;
+  width: 100%;
+}
+
+/* ── Tisch: Brett und Pult ───────────────────────────────────────────────── */
+
+.tisch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.brett-rahmen {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.pult {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 60rem) {
+  .tisch {
+    grid-template-columns: minmax(0, auto) minmax(19rem, 25rem);
+    gap: 28px;
+    justify-content: center;
+  }
+
+  /* Das Brett soll ganz zu sehen sein, ohne zu scrollen. */
+  .brett-rahmen {
+    width: clamp(24rem, calc(100vh - 13.5rem), 44rem);
+    margin: 0;
+  }
+
+  .pult {
+    margin: 0;
+  }
+}
+
+.pult__teil {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: var(--flaeche);
+  border-radius: 16px;
+  box-shadow: var(--schatten);
+}
+
+.pult__teil h2:not(.etikett) {
+  font-family: var(--schrift-titel);
+  font-weight: 400;
+  font-size: var(--t-titel);
+  line-height: 1.15;
+}
+
+/* ── Brett ───────────────────────────────────────────────────────────────── */
+
+.brett {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  background: var(--grund);
+  box-shadow: var(--schatten);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.feld {
+  stroke: var(--grund);
+  stroke-width: 3;
+}
+
+.feld--a {
+  fill: var(--wald-a);
+}
+
+.feld--b {
+  fill: var(--wald-b);
+}
+
+.feld--leiter {
+  fill: var(--lichtung);
+}
+
+.feld--rutsche {
+  fill: var(--kahl);
+}
+
+.feld--ziel {
+  fill: var(--signal);
+}
+
+.feld__muster {
+  pointer-events: none;
+}
+
+.kartenzeichen {
+  fill: none;
+  stroke: var(--wald-zeichen);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.42;
+}
+
+.feld__zahl {
+  font-family: var(--schrift-titel);
+  font-size: 25px;
+  fill: var(--feld-tinte);
+}
+
+.feld__wort {
+  font-family: var(--schrift-text);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--feld-tinte);
+}
+
+.feld__zahl--ziel,
+.feld__wort--ziel {
+  fill: var(--auf-signal);
+}
+
+.leiter__kante,
+.leiter__holz,
+.rutsche__kante,
+.rutsche__erde,
+.rutsche__pfeil {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.leiter__kante {
+  stroke: var(--holz-kante);
+  stroke-width: 11;
+}
+
+.leiter__holz {
+  stroke: var(--holz);
+  stroke-width: 6;
+}
+
+.rutsche__kante {
+  stroke: var(--erde-kante);
+  stroke-width: 27;
+}
+
+.rutsche__erde {
+  stroke: var(--erde);
+  stroke-width: 21;
+}
+
+.rutsche__pfeil {
+  stroke: var(--erde-licht);
+  stroke-width: 3.5;
+}
+
+/* Wohin die drei Karten führen */
+.ziel-marke__rand {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 4;
+  stroke-dasharray: 9 7;
+  stroke-linecap: round;
+  transition: stroke-width 120ms;
+}
+
+.ziel-marke__schild {
+  fill: var(--signal);
+}
+
+.ziel-marke__text {
+  font-family: var(--schrift-titel);
+  font-size: 17px;
+  fill: var(--auf-signal);
+  text-anchor: middle;
+}
+
+.ziel-marke {
+  transition: opacity 120ms;
+}
+
+.hat-auswahl .ziel-marke:not(.ist-aktiv) {
+  opacity: 0.3;
+}
+
+.ziel-marke.ist-aktiv .ziel-marke__rand {
+  stroke-width: 7;
+  stroke-dasharray: none;
+}
+
+/* Spielsteine: Wegzeichen */
+.stein {
+  transition: transform 210ms cubic-bezier(0.3, 0.9, 0.4, 1);
+}
+
+.stein--gleitet {
+  transition: transform 760ms cubic-bezier(0.5, 0, 0.3, 1);
+}
+
+.stein__koerper {
+  transition: transform 160ms;
+}
+
+.stein__platte,
+.marke__platte {
+  fill: var(--platte);
+  stroke: var(--platte-kante);
+  stroke-width: 2.2;
+}
+
+.stein--aktiv .stein__koerper {
+  transform: scale(1.14);
+}
+
+.stein--aktiv .stein__platte {
+  stroke: var(--signal);
+  stroke-width: 4;
+}
+
+.marke__zeichen--0 { fill: var(--marke-0); }
+.marke__zeichen--1 { fill: var(--marke-1); }
+.marke__zeichen--2 { fill: var(--marke-2); }
+.marke__zeichen--3 { fill: var(--marke-3); }
+
+.marke {
+  width: 1.5em;
+  height: 1.5em;
+  flex: none;
+}
+
+.legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+}
+
+.legende__eintrag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legende__bild {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.legende__bild .leiter__kante { stroke-width: 5; }
+.legende__bild .leiter__holz { stroke-width: 2.6; }
+.legende__bild .rutsche__kante { stroke-width: 8; }
+.legende__bild .rutsche__erde { stroke-width: 5.5; }
+
+/* ── Pult: Teams wählen ──────────────────────────────────────────────────── */
+
+.anzahl {
+  display: grid;
+  gap: 6px;
+}
+
+.anzahl legend {
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.anzahl__wahl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.anzahl__wahl input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.anzahl__wahl label {
+  display: grid;
+  place-items: center;
+  padding: 9px 0;
+  border: 1.5px solid var(--linie);
+  border-radius: 12px;
+  background: var(--flaeche-tief);
+  font-family: var(--schrift-titel);
+  font-size: var(--t-gross);
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+.anzahl__wahl input:checked + label {
+  border-color: var(--gruen);
+  background: var(--gruen);
+  color: var(--auf-gruen);
+}
+
+.anzahl__wahl input:focus-visible + label {
+  outline: 3px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.namen {
+  display: grid;
+  gap: 8px;
+}
+
+.namen__zeile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--t-gross);
+}
+
+.namen__zeile input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1.5px solid var(--linie);
+  border-radius: 10px;
+  background: var(--flaeche-tief);
+  font-size: var(--t-text);
+}
+
+.namen__zeile input::placeholder {
+  color: var(--tinte-leise);
+  opacity: 1;
+}
+
+.kurzregeln {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--linie);
+  font-size: var(--t-leise);
+}
+
+.kurzregeln h3 {
+  font-size: var(--t-text);
+}
+
+.kurzregeln ul,
+.regeln {
+  display: grid;
+  gap: 8px;
+}
+
+.kurzregeln li,
+.regeln li,
+.fazit li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.kurzregeln li::before,
+.regeln li::before,
+.fazit li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--gruen);
+  transform: rotate(45deg);
+}
+
+/* ── Pult: Zug ───────────────────────────────────────────────────────────── */
+
+.zug__wer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.zug__hinweis {
+  color: var(--tinte-leise);
+  font-size: var(--t-leise);
+}
+
+.karten {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.karte {
+  appearance: none;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 10px 12px 12px;
+  border: 1.5px solid var(--linie);
+  border-radius: 14px;
+  background: var(--flaeche-tief);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms, border-color 140ms, box-shadow 140ms;
+}
+
+.karte:hover:not(:disabled),
+.karte:focus-visible {
+  border-color: var(--signal);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 0 -2px var(--signal);
+}
+
+.karte:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.karte__stufe {
+  display: grid;
+  gap: 4px;
+  font-size: var(--t-klein);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinte-leise);
+}
+
+.karte__tannen {
+  width: 44px;
+  height: 14px;
+}
+
+.karte__tanne {
+  fill: none;
+  stroke: var(--tinte-leise);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.karte__tanne--voll {
+  fill: var(--gruen);
+  stroke: var(--gruen);
+}
+
+.karte__wert {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  line-height: 1;
+}
+
+.karte__zahl {
+  font-family: var(--schrift-titel);
+  font-size: 2.75rem;
+  color: var(--gruen);
+  font-variant-numeric: tabular-nums;
+}
+
+.karte__einheit {
+  font-size: var(--t-leise);
+  font-weight: 700;
+}
+
+.karte__ziel {
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+}
+
+.karte__sonder {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 2px 9px 2px 7px;
+  border: 1.5px solid;
+  border-radius: 999px;
+  font-size: var(--t-klein);
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.karte__sonder svg {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex: none;
+}
+
+.karte__sonder--ladder {
+  border-color: var(--holz);
+}
+
+.karte__sonder--ladder path {
+  fill: var(--holz);
+}
+
+.karte__sonder--slide {
+  border-color: var(--erde);
+}
+
+.karte__sonder--slide path {
+  fill: var(--erde);
+}
+
+.zug__knoepfe,
+.dlg__knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meldung {
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+}
+
+.meldung:empty {
+  display: none;
+}
+
+/* ── Spielstand ──────────────────────────────────────────────────────────── */
+
+.stand {
+  display: grid;
+  gap: 4px;
+}
+
+.stand__zeile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 7px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+}
+
+.stand__zeile[aria-current="true"] {
+  border-color: var(--signal);
+  background: var(--flaeche-tief);
+}
+
+.stand__name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.stand__feld {
+  font-family: var(--schrift-titel);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stand__quote {
+  grid-column: 2 / -1;
+  font-size: var(--t-klein);
+  color: var(--tinte-leise);
+}
+
+/* ── Dialoge ─────────────────────────────────────────────────────────────── */
+
+.dlg {
+  width: min(35rem, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  padding: 22px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--flaeche);
+  color: var(--tinte);
+  box-shadow: var(--schatten);
+  overflow-y: auto;
+}
+
+.dlg[open] {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.dlg::backdrop {
+  background: rgb(6 13 9 / 0.66);
+}
+
+.dlg--breit {
+  width: min(46rem, calc(100% - 24px));
+}
+
+.dlg__titel {
+  font-family: var(--schrift-titel);
+  font-weight: 400;
+  font-size: var(--t-titel);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.dlg h3:not(.fazit__frage) {
+  font-size: var(--t-text);
+}
+
+/* Frage */
+.frage__kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: var(--t-leise);
+}
+
+.chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--gruen);
+  color: var(--auf-gruen);
+  font-size: var(--t-klein);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.frage__wert {
+  color: var(--tinte-leise);
+  font-weight: 700;
+}
+
+.frage__wer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.frage__text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+  outline: none;
+}
+
+.antworten {
+  display: grid;
+  gap: 8px;
+}
+
+.antwort {
+  appearance: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px 11px 11px;
+  border: 1.5px solid var(--linie);
+  border-radius: 14px;
+  background: var(--flaeche-tief);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms, transform 120ms;
+}
+
+.antwort:hover:not(:disabled) {
+  border-color: var(--gruen);
+  transform: translateX(3px);
+}
+
+.antwort:disabled {
+  cursor: default;
+  color: var(--tinte);
+}
+
+.antwort__zeichen {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 9px;
+  background: var(--flaeche);
+  border: 1.5px solid var(--linie);
+  font-family: var(--schrift-titel);
+  font-size: var(--t-text);
+}
+
+.antwort__zeichen svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.antwort--blass {
+  opacity: 0.55;
+}
+
+.antwort--richtig {
+  border-color: var(--richtig);
+  background: var(--richtig-flaeche);
+}
+
+.antwort--richtig .antwort__zeichen {
+  border-color: var(--richtig);
+  background: var(--richtig);
+  color: var(--flaeche);
+}
+
+.antwort--falsch {
+  border-color: var(--falsch);
+  background: var(--falsch-flaeche);
+}
+
+.antwort--falsch .antwort__zeichen {
+  border-color: var(--falsch);
+  background: var(--falsch);
+  color: var(--flaeche);
+}
+
+.aufloesung {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--linie);
+}
+
+.aufloesung__urteil {
+  font-family: var(--schrift-titel);
+  font-size: var(--t-gross);
+}
+
+.aufloesung--richtig .aufloesung__urteil {
+  color: var(--richtig);
+}
+
+.aufloesung--falsch .aufloesung__urteil {
+  color: var(--falsch);
+}
+
+.aufloesung .knopf {
+  margin-top: 6px;
+}
+
+/* Ereignis: Leiter oder Rutsche */
+.ereignis__bild {
+  width: 7.5rem;
+  height: 5.25rem;
+  border-radius: 12px;
+}
+
+.ereignis__grund--ladder {
+  fill: var(--lichtung);
+}
+
+.ereignis__grund--slide {
+  fill: var(--kahl);
+}
+
+/* Fazit */
+.fazit {
+  display: grid;
+  gap: 12px;
+}
+
+.dlg__knoepfe + .fazit {
+  padding-top: 16px;
+  border-top: 1.5px solid var(--linie);
+}
+
+.fazit__frage {
+  font-family: var(--schrift-titel);
+  font-weight: 400;
+  font-size: var(--t-gross);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.fazit__inhalt {
+  display: grid;
+  gap: 16px;
+}
+
+.fazit__gruppen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 16px 24px;
+}
+
+.fazit__gruppe {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.fazit__gruppe h4 {
+  margin: 0;
+  justify-self: start;
+}
+
+.fazit__gruppe ul {
+  display: grid;
+  gap: 6px;
+  font-size: var(--t-leise);
+}
+
+.fazit__schluss {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--flaeche-tief);
+  font-weight: 700;
+}
+
+.quellen {
+  display: grid;
+  gap: 8px;
+  font-size: var(--t-leise);
+}
+
+.quellen a {
+  color: var(--gruen);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.quellen__detail {
+  display: block;
+  color: var(--tinte-leise);
+}
+
+/* ── Handy ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 59.99rem) {
+  .kopf__titel {
+    font-size: var(--t-titel);
+  }
+
+  .kopf__frage {
+    font-size: var(--t-leise);
+  }
+
+  /* Während des Spiels zählt der Platz für Brett und Karten. */
+  body:not([data-phase="setup"]) .kopf__frage {
+    display: none;
+  }
+
+  .knopf:not(.knopf--gross) {
+    padding: 7px 13px;
+  }
+
+  .pult__teil {
+    padding: 14px;
+  }
+
+  .karte {
+    padding: 10px 8px 10px 10px;
+  }
+
+  .karte__zahl {
+    font-size: 2.25rem;
+  }
+
+  .dlg {
+    padding: 18px;
+  }
+
+  .frage__text {
+    font-size: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

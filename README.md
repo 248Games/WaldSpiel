@@ -29,6 +29,9 @@ gemischt, wenn alle Karten dran waren. Ein Spiel zu zweit dauert meistens 15 bis
 Alle Fragen und Texte stehen in `js/content.js`. Die erste Antwort ist immer die
 richtige, das Spiel mischt sie selbst. Danach mit `npm test` prüfen (braucht Node.js).
 
+Die KI-Prompts, die wir genutzt haben, stehen im Spiel unter „KI-Prompts“.
+Neue Prompts trägt man in `js/content.js` bei `AI_PROMPTS` ein.
+
 Bei jedem Push auf `main` wird das Spiel automatisch getestet und online gestellt
 (`.github/workflows/pages.yml`).
 

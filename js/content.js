@@ -817,6 +817,22 @@
     },
   ];
 
+  // Alle Prompts, die wir für dieses Projekt an eine KI geschickt haben (wörtlich)
+  const AI_PROMPTS = [
+    {
+      prompt: 'Make 60 questiones to the to you shown essay (auf deutsch)',
+      purpose: 'Die 60 Fragekarten aus unserem Aufsatz erstellen lassen',
+    },
+    {
+      prompt: 'correct my spelling mistakes and refine my tabs to be more professionaly sounding',
+      purpose: 'Rechtschreibung und Texte der Tabs verbessern',
+    },
+    {
+      prompt: 'hey claude how do i set up github pages',
+      purpose: 'Das Spiel über GitHub Pages online stellen',
+    },
+  ];
+
   const namespace = (global.WaldLeiternspiel = global.WaldLeiternspiel || {});
   namespace.content = {
     RESEARCH_QUESTION,
@@ -825,5 +841,6 @@
     LADDER_EVENTS,
     CONCLUSION,
     SOURCES,
+    AI_PROMPTS,
   };
 })(globalThis);

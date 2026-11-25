@@ -290,6 +290,17 @@
 
   function renderSetup() {
     const count = selectedCount();
+    $('#prompts').replaceChildren(
+      ...content.AI_PROMPTS.map((entry) =>
+        h(
+          'li',
+          {},
+          h('blockquote', { class: 'prompts__text', text: entry.prompt }),
+          h('span', { class: 'prompts__zweck', text: entry.purpose }),
+        ),
+      ),
+    );
+
     for (const row of document.querySelectorAll('.namen__zeile')) {
       row.hidden = Number(row.dataset.player) >= count;
     }
@@ -707,6 +718,7 @@
 
     $('#btn-rules').addEventListener('click', () => $('#dlg-rules').showModal());
     $('#btn-conclusion').addEventListener('click', () => $('#dlg-conclusion').showModal());
+    $('#btn-prompts').addEventListener('click', () => $('#dlg-prompts').showModal());
     $('#btn-new').addEventListener('click', () => {
       if (state && state.phase !== 'over') $('#dlg-confirm').showModal();
       else backToSetup();

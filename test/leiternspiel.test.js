@@ -4,8 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
 
-// The game's scripts are classic scripts that attach to a global, so that
-// index.html runs from disk without a server. Load them for that side effect.
+// Die Spieldateien hängen sich an globalThis, deshalb einfach laden
 await import('../js/content.js');
 await import('../js/game.js');
 
@@ -17,11 +16,11 @@ const gameDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const newGame = (names = ['Ada', 'Ben'], seed = 7) => game.createGame(names, { questions: QUESTIONS, seed });
 
-/** The position in which the correct answer is shown for the open question. */
+// An welcher Stelle die richtige / eine falsche Antwort steht
 const correctIndex = (state) => state.question.order.indexOf(0);
 const wrongIndex = (state) => state.question.order.findIndex((original) => original !== 0);
 
-/** Put the answering player on a field and the reader's next card on top of the pile. */
+// Antwortenden auf ein Feld stellen und eine Karte mit diesen Punkten oben auf den Stapel legen
 function staged(state, field, points) {
   const copy = structuredClone(state);
   copy.players[game.answererOf(copy)].field = field;
@@ -32,7 +31,7 @@ function staged(state, field, points) {
   return copy;
 }
 
-/** Draw, answer (right or wrong) and resolve everything up to the next draw. */
+// Ein ganzer Zug: ziehen, antworten, weiter
 function playTurn(state, right) {
   let next = game.drawCard(state);
   next = game.answer(next, right ? correctIndex(next) : wrongIndex(next));
@@ -41,7 +40,7 @@ function playTurn(state, right) {
   return next;
 }
 
-/** A difficulty band: 1–2 points easy, 3–4 medium, 5–6 hard. */
+// 1-2 Punkte leicht, 3-4 mittel, 5-6 schwer
 const band = (points) => Math.ceil(points / 2);
 
 describe('Leiternspiel: cards', () => {
@@ -434,7 +433,7 @@ describe('Leiternspiel: the pile', () => {
 });
 
 describe('Leiternspiel: whole games', () => {
-  /** Play to the end, answering correctly with the given probability. */
+  // Spiel bis zum Ende, accuracy = Anteil richtiger Antworten
   function playOut(seed, players, accuracy) {
     let state = newGame(players, seed);
     let draws = seed;

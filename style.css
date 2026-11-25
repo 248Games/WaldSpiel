@@ -1,9 +1,5 @@
-/*
- * Wald-Leiternspiel
- *
- * Layout: links das Brett als quadratische Forstkarte, rechts das Pult mit dem
- * Kartenstapel und dem Spielstand. Auf dem Handy liegt das Pult unter dem Brett.
- */
+/* Wald-Leiternspiel
+   Links das Brett, rechts Stapel und Spielstand. Am Handy untereinander. */
 
 @font-face {
   font-family: "Alfa Slab One";
@@ -29,7 +25,7 @@
   font-display: swap;
 }
 
-/* ── Farben und Schrift: Tag im Wald ─────────────────────────────────────── */
+/* Farben und Schrift: Tag im Wald */
 
 :root {
   color-scheme: light;
@@ -68,7 +64,7 @@
   --marke-2: #d99a00;
   --marke-3: #2b8a3e;
 
-  --schatten: 0 1px 2px rgb(21 35 26 / 0.1), 0 10px 28px rgb(21 35 26 / 0.12);
+  --schatten: 0 1px 3px rgb(21 35 26 / 0.16);
 
   --schrift-titel: "Alfa Slab One", Rockwell, "Rockwell Nova", "Roboto Slab", Georgia, serif;
   --schrift-text: "Lexend", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -81,7 +77,7 @@
   --t-marke: 2rem;
 }
 
-/* ── Nacht im Wald ───────────────────────────────────────────────────────── */
+/* Nacht im Wald */
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -110,7 +106,7 @@
     --falsch-flaeche: #45211e;
     --platte: #f5f7ef;
     --platte-kante: #0a110d;
-    --schatten: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+    --schatten: 0 1px 3px rgb(0 0 0 / 0.5);
   }
 }
 
@@ -140,10 +136,10 @@
   --falsch-flaeche: #45211e;
   --platte: #f5f7ef;
   --platte-kante: #0a110d;
-  --schatten: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+  --schatten: 0 1px 3px rgb(0 0 0 / 0.5);
 }
 
-/* ── Grundlagen ──────────────────────────────────────────────────────────── */
+/* Grundlagen */
 
 *,
 *::before,
@@ -210,12 +206,10 @@ input {
 .etikett {
   font-size: var(--t-klein);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--tinte-leise);
 }
 
-/* ── Seite und Kopf ──────────────────────────────────────────────────────── */
+/* Seite und Kopf */
 
 .seite {
   max-width: 76rem;
@@ -266,12 +260,12 @@ input {
   gap: 8px;
 }
 
-/* ── Knöpfe ──────────────────────────────────────────────────────────────── */
+/* Knöpfe */
 
 .knopf {
   appearance: none;
   border: 1.5px solid var(--linie);
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   padding: 8px 16px;
   font-size: var(--t-leise);
@@ -305,11 +299,11 @@ input {
 .knopf--gross {
   padding: 13px 22px;
   font-size: var(--t-text);
-  border-radius: 14px;
+  border-radius: 8px;
   width: 100%;
 }
 
-/* ── Tisch: Brett und Pult ───────────────────────────────────────────────── */
+/* Tisch: Brett und Pult */
 
 .tisch {
   display: grid;
@@ -359,8 +353,8 @@ input {
   gap: 14px;
   padding: 18px;
   background: var(--flaeche);
-  border-radius: 16px;
-  box-shadow: var(--schatten);
+  border: 1.5px solid var(--linie);
+  border-radius: 8px;
 }
 
 .pult__teil h2:not(.etikett) {
@@ -370,14 +364,14 @@ input {
   line-height: 1.15;
 }
 
-/* ── Brett ───────────────────────────────────────────────────────────────── */
+/* Brett */
 
 .brett {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 1;
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--grund);
   box-shadow: var(--schatten);
   user-select: none;
@@ -432,8 +426,6 @@ input {
   font-family: var(--schrift-text);
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   fill: var(--feld-tinte);
 }
 
@@ -536,7 +528,7 @@ input {
   stroke-width: 1.5;
 }
 
-/* ── Pult: Spieler eintragen ─────────────────────────────────────────────── */
+/* Pult: Spieler eintragen */
 
 .anzahl {
   display: grid;
@@ -567,7 +559,7 @@ input {
   place-items: center;
   padding: 9px 0;
   border: 1.5px solid var(--linie);
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--flaeche-tief);
   font-family: var(--schrift-titel);
   font-size: var(--t-gross);
@@ -604,7 +596,7 @@ input {
   min-width: 0;
   padding: 9px 12px;
   border: 1.5px solid var(--linie);
-  border-radius: 10px;
+  border-radius: 6px;
   background: var(--flaeche-tief);
   font-size: var(--t-text);
 }
@@ -624,7 +616,7 @@ input {
   max-width: 7.5rem;
   padding: 3px 9px;
   border: 1.5px solid var(--signal);
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: var(--t-klein);
   font-weight: 700;
   line-height: 1.25;
@@ -664,12 +656,11 @@ input {
   top: 0.5em;
   width: 7px;
   height: 7px;
-  border-radius: 2px;
+  border-radius: 50%;
   background: var(--gruen);
-  transform: rotate(45deg);
 }
 
-/* ── Pult: Zug ───────────────────────────────────────────────────────────── */
+/* Pult: Zug */
 
 /* "Ada liest vor, Ben antwortet" */
 .rollen {
@@ -708,18 +699,17 @@ input {
   width: 100%;
   padding: 12px 16px 12px 12px;
   border: 1.5px solid var(--linie);
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--flaeche-tief);
   text-align: left;
   cursor: pointer;
-  transition: transform 140ms, border-color 140ms, box-shadow 140ms;
+  transition: border-color 140ms;
 }
 
 .stapel:hover:not(:disabled),
 .stapel:focus-visible {
   border-color: var(--signal);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 0 -2px var(--signal);
+
 }
 
 .stapel:disabled {
@@ -779,7 +769,7 @@ input {
   display: none;
 }
 
-/* ── Spielstand ──────────────────────────────────────────────────────────── */
+/* Spielstand */
 
 .stand {
   display: grid;
@@ -793,7 +783,7 @@ input {
   gap: 2px 10px;
   padding: 7px 10px;
   border: 1.5px solid transparent;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .stand__zeile[aria-current="true"] {
@@ -814,7 +804,7 @@ input {
 .stand__rolle {
   padding: 1px 8px;
   border: 1.5px solid var(--linie);
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: var(--t-klein);
   font-weight: 700;
   color: var(--tinte-leise);
@@ -838,14 +828,14 @@ input {
   color: var(--tinte-leise);
 }
 
-/* ── Dialoge ─────────────────────────────────────────────────────────────── */
+/* Dialoge */
 
 .dlg {
   width: min(35rem, calc(100% - 24px));
   max-height: calc(100% - 24px);
   padding: 22px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 10px;
   background: var(--flaeche);
   color: var(--tinte);
   box-shadow: var(--schatten);
@@ -893,7 +883,7 @@ input {
   gap: 12px;
   padding: 14px;
   border: 1.5px solid var(--linie);
-  border-radius: 16px;
+  border-radius: 8px;
   background: var(--flaeche-tief);
 }
 
@@ -910,7 +900,7 @@ input {
   align-items: baseline;
   gap: 6px;
   padding: 2px 12px 4px;
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--gruen);
   color: var(--auf-gruen);
   line-height: 1;
@@ -929,13 +919,11 @@ input {
 
 .chip {
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--gruen);
   color: var(--auf-gruen);
   font-size: var(--t-klein);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .frage__text {
@@ -960,7 +948,7 @@ input {
   width: 100%;
   padding: 11px 14px 11px 11px;
   border: 1.5px solid var(--linie);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--flaeche);
   text-align: left;
   cursor: pointer;
@@ -982,7 +970,7 @@ input {
   place-items: center;
   width: 2.1rem;
   height: 2.1rem;
-  border-radius: 9px;
+  border-radius: 5px;
   background: var(--flaeche-tief);
   border: 1.5px solid var(--linie);
   font-family: var(--schrift-titel);
@@ -1053,7 +1041,7 @@ input {
 .ereignis__bild {
   width: 7.5rem;
   height: 5.25rem;
-  border-radius: 12px;
+  border-radius: 6px;
 }
 
 .ereignis__grund--up {
@@ -1122,7 +1110,7 @@ input {
 
 .fazit__schluss {
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--flaeche-tief);
   font-weight: 700;
 }
@@ -1144,7 +1132,7 @@ input {
   color: var(--tinte-leise);
 }
 
-/* ── Handy ───────────────────────────────────────────────────────────────── */
+/* Handy */
 
 @media (max-width: 59.99rem) {
   .kopf__titel {

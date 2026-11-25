@@ -1,9 +1,9 @@
 /**
  * Wald-Leiternspiel – the interface.
  *
- * Draws the board, deals the cards, asks the questions and moves the pieces.
- * All rules live in game.js; this file only turns a game state into what is on
- * screen and turns clicks into the next state.
+ * Draws the board, lets the reader draw a card, asks the question and moves
+ * the pieces. All rules live in game.js; this file only turns a game state
+ * into what is on screen and turns taps into the next state.
  */
 (function () {
   'use strict';
@@ -27,12 +27,11 @@
 
   // ── What the interface remembers ──────────────────────────────────────────
 
-  let state = null;           // the game; null while the teams are being chosen
-  let busy = false;           // a piece is on the move, input waits
-  let status = '';            // one sentence about what just happened
+  let state = null;            // the game; null while the players are being chosen
+  let busy = false;            // a piece is on the move, input waits
+  let status = '';             // one sentence about what just happened
   let resultDismissed = false; // the result dialog was closed to look at the board
-  let shownQuestion = '';     // which question and phase the dialog currently shows
-  let shownOffer = '';        // which hand of cards the panel currently shows
+  let shownQuestion = '';      // which card and phase the dialog currently shows
 
   // ── Small builders ────────────────────────────────────────────────────────
 
@@ -52,7 +51,13 @@
   const s = (tag, props, ...children) => build((t) => document.createElementNS(SVG_NS, t), tag, props, children);
 
   const fields = (count) => (count === 1 ? '1 Feld' : `${count} Felder`);
+  const questions = (count) => (count === 1 ? '1 Frage' : `${count} Fragen`);
   const round = (value) => Math.round(value * 10) / 10;
+
+  /** Who reads the card out and who answers it. */
+  function roles() {
+    return { reader: state.reader, answerer: game.answererOf(state) };
+  }
 
   // ── Board geometry ────────────────────────────────────────────────────────
 
@@ -66,12 +71,6 @@
     return { x: x + CELL / 2, y: y + CELL / 2 };
   }
 
-  /** Where ladders and slides meet a cell: right of centre, clear of its number. */
-  function pathAnchor(field) {
-    const { x, y } = cellCenter(field);
-    return { x: x + 9, y: y + 2 };
-  }
-
   function piecePosition(field, player) {
     const { x, y } = cellCenter(field);
     return { x: x + SLOTS[player][0], y: y + SLOTS[player][1] };
@@ -79,7 +78,7 @@
 
   // ── Trail markers: the playing pieces ─────────────────────────────────────
   // German hiking trails are marked with simple shapes painted on a white
-  // plate. Each team gets one, so pieces differ by shape as well as colour.
+  // plate. Each player gets one, so pieces differ by shape as well as colour.
 
   function markerSign(player) {
     const cls = `marke__zeichen marke__zeichen--${player}`;
@@ -118,18 +117,25 @@
     );
   }
 
-  function ladderShape(from, to) {
-    const a = pathAnchor(from);
-    const b = pathAnchor(to);
+  /**
+   * A ladder stands in one column. It meets its bottom field low and a little
+   * left of centre and its top field high on the right, so it leans slightly
+   * and stays clear of the numbers in the top-left corner of every field.
+   */
+  function ladderShape(ladder) {
+    const low = cellOrigin(ladder.bottom);
+    const high = cellOrigin(ladder.top);
+    const a = { x: low.x + 61, y: low.y + 66 };
+    const b = { x: high.x + 80, y: high.y + 50 };
     const length = Math.hypot(b.x - a.x, b.y - a.y);
     const ux = (b.x - a.x) / length;
     const uy = (b.y - a.y) / length;
-    const half = 13;
+    const half = 12;
     const point = (along, side) => `${round(a.x + ux * along - uy * side)} ${round(a.y + uy * along + ux * side)}`;
 
     let d = '';
     for (const side of [-half, half]) d += `M${point(-10, side)}L${point(length + 10, side)}`;
-    const rungs = Math.round(length / 27);
+    const rungs = Math.round(length / 26);
     for (let i = 0; i <= rungs; i++) {
       const along = (length * i) / rungs;
       d += `M${point(along, -half)}L${point(along, half)}`;
@@ -137,77 +143,43 @@
     return d;
   }
 
-  function slideShape(from, to) {
-    const a = pathAnchor(from);
-    const b = pathAnchor(to);
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const length = Math.hypot(dx, dy);
-    // Slides run downhill (dy > 0), so this always bows them to the right,
-    // away from the field numbers in the cells they cross.
-    const bend = Math.min(30, length * 0.15);
-    const m = { x: (a.x + b.x) / 2 + (dy / length) * bend, y: (a.y + b.y) / 2 - (dx / length) * bend };
-
-    // Chevrons pointing downhill, so the direction reads without colour.
-    let arrows = '';
-    for (const t of [0.3, 0.55, 0.8]) {
-      const px = (1 - t) ** 2 * a.x + 2 * (1 - t) * t * m.x + t ** 2 * b.x;
-      const py = (1 - t) ** 2 * a.y + 2 * (1 - t) * t * m.y + t ** 2 * b.y;
-      let tx = 2 * (1 - t) * (m.x - a.x) + 2 * t * (b.x - m.x);
-      let ty = 2 * (1 - t) * (m.y - a.y) + 2 * t * (b.y - m.y);
-      const tangent = Math.hypot(tx, ty);
-      tx /= tangent;
-      ty /= tangent;
-      const wing = (side) => `${round(px - tx * 3 - ty * 6 * side)} ${round(py - ty * 3 + tx * 6 * side)}`;
-      arrows += `M${wing(-1)}L${round(px + tx * 4)} ${round(py + ty * 4)}L${wing(1)}`;
-    }
-
-    return { path: `M${a.x} ${a.y}Q${round(m.x)} ${round(m.y)} ${b.x} ${b.y}`, arrows };
-  }
-
   function ladderNode(ladder) {
-    const d = ladderShape(ladder.from, ladder.to);
+    const d = ladderShape(ladder);
     return s('g', {}, s('path', { class: 'leiter__kante', d }), s('path', { class: 'leiter__holz', d }));
   }
 
-  function slideNode(slide) {
-    const { path, arrows } = slideShape(slide.from, slide.to);
-    return s(
-      'g',
-      {},
-      s('path', { class: 'rutsche__kante', d: path }),
-      s('path', { class: 'rutsche__erde', d: path }),
-      s('path', { class: 'rutsche__pfeil', d: arrows }),
-    );
+  /** A small arrow under the field number: up at the bottom of a ladder, down at the top. */
+  function arrowPath(x, y, direction) {
+    return direction === 'up' ? `M${x + 20} ${y + 40}l9 15h-18z` : `M${x + 11} ${y + 41}h18l-9 15z`;
   }
 
   function boardDescription() {
-    const list = (items) => items.map(({ from, to }) => `${from} nach ${to}`).join(', ');
+    const list = BOARD.ladders.map(({ bottom, top }) => `${bottom} und ${top}`).join(', ');
     return (
-      `Spielbrett mit ${BOARD.size} Feldern. ` +
-      `Leitern: ${list(BOARD.ladders)}. Rutschen: ${list(BOARD.slides)}. ` +
-      'Wo die Teams stehen, steht im Spielstand.'
+      `Spielbrett mit ${BOARD.size} Feldern. Leitern zwischen den Feldern ${list}. ` +
+      'Wer am unteren Ende landet, steigt hinauf. Wer am oberen Ende landet, muss hinunter. ' +
+      'Wo die Spieler stehen, steht im Spielstand.'
     );
   }
 
   function buildBoard() {
     const cells = [];
-    const numbers = [];
+    const marks = [];
 
     for (let field = 1; field <= BOARD.size; field++) {
       const { x, y } = cellOrigin(field);
       const { column, row } = game.cellPosition(field);
-      const special = game.specialAt(field);
+      const ladder = game.ladderAt(field);
       const isGoal = field === BOARD.size;
       const tone = (column + row) % 2 === 0 ? 'a' : 'b';
 
       let kind = `feld--${tone}`;
       if (isGoal) kind = 'feld--ziel';
-      else if (special) kind = special.kind === 'ladder' ? 'feld--leiter' : 'feld--rutsche';
+      else if (ladder) kind = ladder.direction === 'up' ? 'feld--unten' : 'feld--oben';
 
       cells.push(s('rect', { class: `feld ${kind}`, x, y, width: CELL, height: CELL }));
-      // A slide starts on bare ground: no forest signature there.
-      if (!isGoal && !(special && special.kind === 'slide')) {
+      // The top of a ladder is bare ground: no forest signature there.
+      if (!isGoal && !(ladder && ladder.direction === 'down')) {
         cells.push(
           s('rect', {
             class: 'feld__muster',
@@ -221,7 +193,7 @@
       }
 
       const word = field === 1 ? 'Start' : isGoal ? 'Ziel' : null;
-      numbers.push(
+      marks.push(
         s(
           'text',
           { x: x + 9, y: y + 29 },
@@ -229,6 +201,7 @@
           word && s('tspan', { class: `feld__wort${isGoal ? ' feld__wort--ziel' : ''}`, dx: 6, text: word }),
         ),
       );
+      if (ladder) marks.push(s('path', { class: 'feld__pfeil', d: arrowPath(x, y, ladder.direction) }));
     }
 
     const board = $('#board');
@@ -250,11 +223,9 @@
         'g',
         { 'clip-path': 'url(#brett-rand)' },
         ...cells,
-        ...BOARD.slides.map((slide) => slideNode(slide)),
         ...BOARD.ladders.map((ladder) => ladderNode(ladder)),
-        ...numbers,
+        ...marks,
       ),
-      s('g', { id: 'targets' }),
       s('g', { id: 'pieces' }),
     );
   }
@@ -273,6 +244,7 @@
   function renderPieces() {
     const layer = $('#pieces');
     const count = state ? state.players.length : selectedCount();
+    const active = state && state.phase !== 'over' ? game.answererOf(state) : -1;
 
     for (let player = 0; player < game.MAX_PLAYERS; player++) {
       let piece = pieceFor(player);
@@ -294,12 +266,11 @@
         layer.append(piece);
       }
       place(piece, state ? state.players[player].field : 1);
-      const active = Boolean(state) && state.phase !== 'over' && state.current === player;
-      piece.classList.toggle('stein--aktiv', active);
+      piece.classList.toggle('stein--aktiv', player === active);
     }
 
-    // Whoever is to move lies on top of a shared cell.
-    if (state && state.phase !== 'over') layer.append(pieceFor(state.current));
+    // Whoever answers next lies on top of a shared cell.
+    if (active >= 0) layer.append(pieceFor(active));
   }
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, reducedMotion.matches ? 0 : ms));
@@ -323,46 +294,6 @@
     piece.classList.remove('stein--gleitet');
   }
 
-  // ── Where the cards lead ──────────────────────────────────────────────────
-
-  function renderTargets() {
-    const layer = $('#targets');
-    layer.replaceChildren();
-    layer.classList.remove('hat-auswahl');
-    if (!state || state.phase !== 'choose' || busy) return;
-
-    const byField = new Map();
-    for (const preview of game.previewOffer(state)) {
-      if (!byField.has(preview.target)) byField.set(preview.target, []);
-      byField.get(preview.target).push(preview);
-    }
-
-    for (const [field, previews] of byField) {
-      const { x, y } = cellOrigin(field);
-      const mark = s(
-        'g',
-        { class: 'ziel-marke', 'data-levels': previews.map((p) => p.level).join(' ') },
-        s('rect', { class: 'ziel-marke__rand', x: x + 5, y: y + 5, width: CELL - 10, height: CELL - 10, rx: 12 }),
-      );
-      // Several cards can reach the goal at once; the goal needs no label.
-      if (field !== BOARD.size) {
-        mark.append(
-          s('rect', { class: 'ziel-marke__schild', x: x + 55, y: y + 8, width: 38, height: 24, rx: 12 }),
-          s('text', { class: 'ziel-marke__text', x: x + 74, y: y + 26, text: `+${previews[0].steps}` }),
-        );
-      }
-      layer.append(mark);
-    }
-  }
-
-  function highlightTarget(level) {
-    const layer = $('#targets');
-    layer.classList.toggle('hat-auswahl', Boolean(level));
-    for (const mark of layer.children) {
-      mark.classList.toggle('ist-aktiv', Boolean(level) && mark.dataset.levels.split(' ').includes(level));
-    }
-  }
-
   // ── The panel ─────────────────────────────────────────────────────────────
 
   function selectedCount() {
@@ -377,112 +308,72 @@
     }
   }
 
-  function difficultyPips(level) {
-    const filled = game.LEVELS.indexOf(level) + 1;
-    return s(
-      'svg',
-      { class: 'karte__tannen', viewBox: '0 0 44 14', 'aria-hidden': 'true' },
-      ...[0, 1, 2].map((i) =>
-        s('path', {
-          class: `karte__tanne${i < filled ? ' karte__tanne--voll' : ''}`,
-          d: `M${6 + i * 15} 1.5 ${11.5 + i * 15} 12.5h-11z`,
-        }),
-      ),
-    );
+  /** "Ada liest vor, Ben antwortet", each with their trail marker. */
+  function rolesLine() {
+    const { reader, answerer } = roles();
+    return [
+      h('span', { class: 'rolle' }, markerIcon(reader), h('span', { text: `${state.players[reader].name} liest vor,` })),
+      ' ',
+      h('span', { class: 'rolle' }, markerIcon(answerer), h('span', { text: `${state.players[answerer].name} antwortet` })),
+    ];
   }
 
-  function cardNode(preview) {
-    const { level, steps, target, reachesGoal, special } = preview;
-    return h(
-      'button',
-      {
-        type: 'button',
-        class: 'karte',
-        'data-level': level,
-        onclick: () => onChoose(level),
-        onpointerenter: () => highlightTarget(level),
-        onpointerleave: () => highlightTarget(null),
-        onfocus: () => highlightTarget(level),
-        onblur: () => highlightTarget(null),
-      },
-      h('span', { class: 'karte__stufe' }, difficultyPips(level), h('span', { text: content.LEVEL_LABELS[level] })),
-      h(
-        'span',
-        { class: 'karte__wert' },
-        h('span', { class: 'karte__zahl', text: String(steps) }),
-        h('span', { class: 'karte__einheit', text: steps === 1 ? 'Feld' : 'Felder' }),
-      ),
-      h('span', { class: 'karte__ziel', text: reachesGoal ? 'ins Ziel' : `bis Feld ${target}` }),
-      special &&
-        h(
-          'span',
-          { class: `karte__sonder karte__sonder--${special.kind}` },
-          s(
-            'svg',
-            { viewBox: '0 0 10 10', 'aria-hidden': 'true' },
-            s('path', { d: special.kind === 'ladder' ? 'M5 1.5 9 8.5H1z' : 'M5 8.5 9 1.5H1z' }),
-          ),
-          h('span', { text: special.kind === 'ladder' ? 'Leiter' : 'Rutsche' }),
-          h('span', { class: 'sr-only', text: ` auf Feld ${special.to}` }),
-        ),
-    );
+  function deckCount() {
+    const left = state.pile.length;
+    if (left === 0) return 'Alle Karten gespielt: Der Stapel wird neu gemischt.';
+    return left === 1 ? 'Noch 1 Karte im Stapel' : `Noch ${left} Karten im Stapel`;
   }
 
   function renderTurn() {
     const over = state.phase === 'over';
-    const player = state.players[over ? state.winner : state.current];
-    const index = over ? state.winner : state.current;
 
-    $('#turn-who').replaceChildren(
-      markerIcon(index),
-      // Worded so that it fits "Team 1" as well as "Die Eichhörnchen".
-      h('span', { text: over ? `Sieg für ${player.name}!` : `Am Zug: ${player.name}` }),
-    );
-    $('#turn-hint').textContent = over
-      ? `Ziel erreicht in ${state.round} ${state.round === 1 ? 'Runde' : 'Runden'}.`
-      : 'Wähle eine Fragekarte. Stimmt deine Antwort, rückst du so weit vor.';
-
-    const cards = $('#cards');
-    cards.hidden = over;
-    $('#over-actions').hidden = !over;
-
-    if (state.phase === 'choose') {
-      // Deal a new hand only when it really is one, so a card never changes
-      // under a finger that is about to tap it.
-      const offer = `${state.round}:${state.current}:${JSON.stringify(state.offer)}`;
-      if (offer !== shownOffer) {
-        shownOffer = offer;
-        cards.replaceChildren(...game.previewOffer(state).map(cardNode));
-      }
-      for (const card of cards.children) card.disabled = false;
+    if (over) {
+      const winner = state.players[state.winner];
+      $('#turn-title').replaceChildren(
+        h('span', { class: 'rolle' }, markerIcon(state.winner), h('span', { text: `Sieg für ${winner.name}!` })),
+      );
+      $('#turn-hint').textContent = `Ziel erreicht nach ${questions(state.asked)}.`;
     } else {
-      for (const card of cards.children) card.disabled = true;
+      const { reader, answerer } = roles();
+      const readerName = state.players[reader].name;
+      const answererName = state.players[answerer].name;
+      $('#turn-title').replaceChildren(...rolesLine());
+      $('#turn-hint').textContent =
+        `${readerName} zieht eine Karte und liest sie ${answererName} vor. ` +
+        `Ist die Antwort richtig, rückt ${answererName} so viele Felder vor, wie Punkte auf der Karte stehen.`;
+      $('#deck-count').textContent = deckCount();
     }
 
+    const draw = $('#btn-draw');
+    draw.hidden = over;
+    draw.disabled = busy || state.phase !== 'draw';
+    $('#over-actions').hidden = !over;
     $('#status').textContent = status;
   }
 
   function standingRow(player, index, current) {
     const asked = player.correct + player.wrong;
+    let role = null;
+    if (current) {
+      if (index === current.reader) role = h('span', { class: 'stand__rolle', text: 'liest vor' });
+      if (index === current.answerer) role = h('span', { class: 'stand__rolle stand__rolle--antwortet', text: 'antwortet' });
+    }
     return h(
       'li',
-      { class: 'stand__zeile', 'aria-current': current ? 'true' : null },
+      { class: 'stand__zeile', 'aria-current': current && index === current.answerer ? 'true' : null },
       markerIcon(index),
-      h('span', { class: 'stand__name', text: player.name }),
+      h('span', { class: 'stand__name' }, h('span', { text: player.name }), role),
       h('span', { class: 'stand__feld', text: player.field === BOARD.size ? 'Ziel' : `Feld ${player.field}` }),
       h('span', {
         class: 'stand__quote',
-        text: asked === 0 ? 'Noch keine Frage' : `${player.correct} von ${asked} richtig`,
+        text: asked === 0 ? 'Noch keine Frage beantwortet' : `${player.correct} von ${asked} richtig`,
       }),
     );
   }
 
   function renderStandings() {
-    $('#standings').replaceChildren(
-      ...state.players.map((player, index) =>
-        standingRow(player, index, state.phase !== 'over' && index === state.current),
-      ),
-    );
+    const current = state.phase === 'over' ? null : roles();
+    $('#standings').replaceChildren(...state.players.map((player, index) => standingRow(player, index, current)));
   }
 
   // ── Dialogs ───────────────────────────────────────────────────────────────
@@ -496,18 +387,29 @@
   const CROSS = 'M6 6 18 18M18 6 6 18';
 
   function renderQuestion() {
-    const { id, level, steps, order } = state.question;
-    const key = `${id}:${state.phase}:${state.current}`;
+    const { id, points, order } = state.question;
+    const key = `${state.asked}:${id}:${state.phase}`;
     if (key === shownQuestion) return;
     shownQuestion = key;
 
     const question = questionsById.get(id);
     const revealed = state.phase === 'reveal';
-    const player = state.players[state.current];
+    const { reader, answerer } = roles();
+    const readerName = state.players[reader].name;
+    const answererName = state.players[answerer].name;
+
+    $('#question-roles').replaceChildren(...rolesLine());
+    const hint = $('#question-hint');
+    hint.hidden = revealed;
+    hint.textContent =
+      `${readerName}, lies die Karte laut vor: Frage, Antworten und Punktzahl. ` +
+      `${answererName} antwortet. Tippt dann die Antwort von ${answererName} an.`;
 
     $('#question-topic').textContent = content.TOPIC_LABELS[question.topic];
-    $('#question-worth').textContent = `${content.LEVEL_LABELS[level]} · ${fields(steps)}`;
-    $('#question-who').replaceChildren(markerIcon(state.current), h('span', { text: player.name }));
+    $('#question-points').replaceChildren(
+      h('span', { class: 'karte__zahl', text: String(points) }),
+      h('span', { class: 'karte__einheit', text: points === 1 ? 'Punkt' : 'Punkte' }),
+    );
     $('#question-text').textContent = question.question;
 
     $('#answers').replaceChildren(
@@ -545,55 +447,54 @@
       ? question.explanation
       : `Richtig ist: ${question.answers[0]}. ${question.explanation}`;
 
-    let next = 'Stehen bleiben';
+    let next = `${answererName} bleibt stehen`;
     if (correct) {
       const { from, landing } = state.move;
-      next = landing === BOARD.size ? 'Ins Ziel ziehen' : `${fields(landing - from)} vorrücken`;
+      next =
+        landing === BOARD.size
+          ? `${answererName} zieht ins Ziel`
+          : `${answererName} rückt ${fields(landing - from)} vor`;
     }
     $('#btn-continue').textContent = next;
   }
 
-  function eventArt(kind) {
+  function eventArt(direction) {
     // A small picture of what is about to happen, drawn like the board.
-    const ground = s('rect', { class: `ereignis__grund--${kind}`, width: 120, height: 84 });
-    if (kind === 'ladder') {
-      const d = 'M48 78 60 6M72 78 84 6M50 66H74M52 54H76M54 42H78M56 30H80M58 18H82';
-      return [ground, s('path', { class: 'leiter__kante', d }), s('path', { class: 'leiter__holz', d })];
-    }
-    const d = 'M24 12Q78 22 96 72';
+    const ground = s('rect', { class: `ereignis__grund--${direction}`, width: 120, height: 84 });
+    const d = 'M36 78 48 6M60 78 72 6M38 66H62M40 54H64M42 42H66M44 30H68M46 18H70';
+    const arrow = direction === 'up' ? 'M97 62V20M86 32 97 20 108 32' : 'M97 20V62M86 50 97 62 108 50';
     return [
       ground,
-      s('path', { class: 'rutsche__kante', d }),
-      s('path', { class: 'rutsche__erde', d }),
-      s('path', { class: 'rutsche__pfeil', d: 'M48 14 56 22 46 27M73 35 78 45 67 47M89 58 91 69 80 68' }),
+      s('path', { class: 'leiter__kante', d }),
+      s('path', { class: 'leiter__holz', d }),
+      s('path', { class: 'ereignis__pfeil', d: arrow }),
     ];
   }
 
   function renderEvent() {
-    const { special } = state.move;
-    const event = content.BOARD_EVENTS[special.from];
-    const up = special.kind === 'ladder';
+    const { ladder, player } = state.move;
+    const event = content.LADDER_EVENTS[ladder.bottom][ladder.direction];
+    const up = ladder.direction === 'up';
+    const { name } = state.players[player];
 
-    $('#event-art').replaceChildren(...eventArt(special.kind));
-    $('#event-kind').textContent = `${up ? 'Leiter' : 'Rutsche'} von Feld ${special.from} auf Feld ${special.to}`;
+    $('#event-art').replaceChildren(...eventArt(ladder.direction));
+    $('#event-kind').textContent = up ? 'Leiter hinauf: Das gibt uns der Wald' : 'Leiter hinunter: Das passiert ohne Wald';
     $('#event-title').textContent = event.title;
     $('#event-text').textContent = event.text;
     $('#btn-event').textContent = up
-      ? `Hochklettern auf Feld ${special.to}`
-      : `Zurückrutschen auf Feld ${special.to}`;
+      ? `${name} steigt hinauf auf Feld ${ladder.to}`
+      : `${name} muss hinunter auf Feld ${ladder.to}`;
   }
 
   function renderResult() {
     const winner = state.players[state.winner];
-    $('#over-rounds').textContent = `Ziel erreicht in ${state.round} ${state.round === 1 ? 'Runde' : 'Runden'}`;
+    $('#over-rounds').textContent = `Ziel erreicht nach ${questions(state.asked)}`;
     $('#over-title').textContent = `Sieg für ${winner.name}!`;
 
     const ranking = state.players
       .map((player, index) => ({ player, index }))
       .sort((a, b) => b.player.field - a.player.field);
-    $('#over-standings').replaceChildren(
-      ...ranking.map(({ player, index }) => standingRow(player, index, index === state.winner)),
-    );
+    $('#over-standings').replaceChildren(...ranking.map(({ player, index }) => standingRow(player, index, null)));
   }
 
   function conclusionNode() {
@@ -618,6 +519,7 @@
     $('#research-question').textContent = content.RESEARCH_QUESTION;
     $('#over-conclusion-title').textContent = content.RESEARCH_QUESTION;
     $('#conclusion-title').textContent = content.RESEARCH_QUESTION;
+    for (const holder of document.querySelectorAll('[data-goal]')) holder.textContent = String(BOARD.size);
 
     for (const holder of document.querySelectorAll('[data-conclusion]')) {
       holder.replaceChildren(...conclusionNode());
@@ -644,11 +546,10 @@
   // ── One render for everything ─────────────────────────────────────────────
 
   function render() {
-    // While a piece travels the screen stays as it is: the cards lock, and
-    // the next player's turn only appears once the piece has arrived.
+    // While a piece travels the screen stays as it is: the deck locks, and
+    // the next turn only appears once the piece has arrived.
     if (busy) {
-      for (const card of $('#cards').children) card.disabled = true;
-      renderTargets();
+      $('#btn-draw').disabled = true;
       return;
     }
 
@@ -666,7 +567,6 @@
       renderSetup();
     }
 
-    renderTargets();
     renderPieces();
 
     const asking = phase === 'question' || phase === 'reveal';
@@ -699,8 +599,7 @@
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (!saved || !game.isValidState(saved.state)) return;
       // The questions may have been edited since the game was saved.
-      const known = Object.values(saved.state.pool).flat().every((id) => questionsById.has(id));
-      if (!known) return;
+      if (!saved.state.cards.every((id) => questionsById.has(id))) return;
       state = saved.state;
       status = typeof saved.status === 'string' ? saved.status : '';
     } catch {
@@ -711,7 +610,6 @@
   // ── What the players do ───────────────────────────────────────────────────
 
   function startGame() {
-    shownOffer = '';
     const names = [];
     for (let player = 0; player < selectedCount(); player++) names.push($(`#name-${player}`).value);
     state = game.createGame(names, { questions: content.QUESTIONS });
@@ -725,8 +623,7 @@
   }
 
   function rematch() {
-    shownOffer = '';
-    state = game.rematch(state, { questions: content.QUESTIONS });
+    state = game.rematch(state);
     status = '';
     resultDismissed = false;
     render();
@@ -737,7 +634,7 @@
       const count = state.players.length;
       $(`#count-${count}`).checked = true;
       state.players.forEach((player, index) => {
-        $(`#name-${index}`).value = player.name === `Team ${index + 1}` ? '' : player.name;
+        $(`#name-${index}`).value = player.name === `Spieler ${index + 1}` ? '' : player.name;
       });
     }
     state = null;
@@ -747,9 +644,9 @@
     render();
   }
 
-  function onChoose(level) {
-    if (busy || !state || state.phase !== 'choose') return;
-    state = game.chooseCard(state, level);
+  function onDraw() {
+    if (busy || !state || state.phase !== 'draw') return;
+    state = game.drawCard(state);
     status = '';
     render();
   }
@@ -777,11 +674,12 @@
   function onContinue() {
     if (busy || !state || state.phase !== 'reveal') return;
     const before = state;
-    const player = before.players[before.current];
+    const index = game.answererOf(before);
+    const player = before.players[index];
     state = game.advance(before);
 
     if (!before.answer.correct) {
-      status = `${player.name}: falsch, weiter auf Feld ${player.field}.`;
+      status = `${player.name}: falsch, bleibt auf Feld ${player.field}.`;
       render();
       return;
     }
@@ -791,20 +689,20 @@
       landing === BOARD.size
         ? `${player.name}: richtig, im Ziel!`
         : `${player.name}: richtig, vor auf Feld ${landing}.`;
-    moving(() => walk(before.current, from, landing));
+    moving(() => walk(index, from, landing));
   }
 
   function onEventContinue() {
     if (busy || !state || state.phase !== 'event') return;
     const before = state;
-    const { special, player: index } = before.move;
+    const { ladder, player: index } = before.move;
     const { name } = before.players[index];
     state = game.advance(before);
     status =
-      special.kind === 'ladder'
-        ? `${name}: Leiter hoch auf Feld ${special.to}.`
-        : `${name}: Rutsche zurück auf Feld ${special.to}.`;
-    moving(() => glide(index, special.to));
+      ladder.direction === 'up'
+        ? `${name}: Leiter hinauf auf Feld ${ladder.to}.`
+        : `${name}: Leiter hinunter auf Feld ${ladder.to}.`;
+    moving(() => glide(index, ladder.to));
   }
 
   // ── Wiring ────────────────────────────────────────────────────────────────
@@ -818,6 +716,7 @@
       if (event.key === 'Enter') startGame();
     });
 
+    $('#btn-draw').addEventListener('click', onDraw);
     $('#btn-continue').addEventListener('click', onContinue);
     $('#btn-event').addEventListener('click', onEventContinue);
 
@@ -831,7 +730,7 @@
 
     $('#btn-rematch').addEventListener('click', rematch);
     $('#btn-rematch-panel').addEventListener('click', rematch);
-    $('#btn-new-teams').addEventListener('click', backToSetup);
+    $('#btn-new-players').addEventListener('click', backToSetup);
     $('#btn-show-result').addEventListener('click', () => {
       resultDismissed = false;
       render();
@@ -844,8 +743,8 @@
       button.addEventListener('click', () => button.closest('dialog').close());
     }
 
-    // A question has to be answered and an event acknowledged: Escape must not
-    // skip them. If the browser closes the dialog anyway, put it back.
+    // A question has to be answered and a ladder taken: Escape must not skip
+    // them. If the browser closes the dialog anyway, put it back.
     for (const id of ['#dlg-question', '#dlg-event']) {
       $(id).addEventListener('cancel', (event) => event.preventDefault());
       $(id).addEventListener('close', () => {

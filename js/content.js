@@ -2,13 +2,15 @@
  * Wald-Leiternspiel – alle Texte und Fragen.
  *
  * Diese Datei ist die einzige, die du ändern musst, wenn du Fragen ergänzen
- * oder Texte anpassen möchtest.
+ * oder Texte anpassen möchtest. Alle Fragen beziehen sich auf den Deutschen
+ * Wald.
  *
- * So ist eine Frage aufgebaut:
+ * So ist eine Frage (eine Karte) aufgebaut:
  *
  *   {
  *     id: 'e21',                    // eindeutiger Name, darf nur einmal vorkommen
- *     level: 'easy',                // 'easy' = leicht, 'medium' = mittel, 'hard' = schwer
+ *     points: 2,                    // Punkte auf der Karte = so viele Felder darf man vor
+ *                                   // leicht: 1 oder 2, mittel: 3 oder 4, schwer: 5 oder 6
  *     topic: 'economy',             // 'economy' = Wirtschaft, 'society' = Gesellschaft,
  *                                   // 'environment' = Umwelt
  *     question: 'Die Frage?',
@@ -16,8 +18,9 @@
  *     explanation: 'Ein bis zwei Sätze, warum das stimmt.',
  *   }
  *
- * Das Spiel mischt die Antworten bei jeder Frage neu, die richtige steht also
- * nicht immer oben.
+ * Jede Punktzahl von 1 bis 6 sollte etwa gleich oft vorkommen (jetzt je 10-mal),
+ * so wie die Seiten eines Würfels. Das Spiel mischt die Karten zu einem Stapel
+ * und die Antworten bei jeder Frage neu, die richtige steht also nicht immer oben.
  *
  * (This is a classic script on purpose: no import/export, so the game runs
  * when index.html is opened straight from disk.)
@@ -28,15 +31,13 @@
   const RESEARCH_QUESTION =
     'Was würde mit der Wirtschaft und Gesellschaft passieren, wenn es keinen Wald mehr in Deutschland gäbe?';
 
-  const LEVEL_LABELS = { easy: 'Leicht', medium: 'Mittel', hard: 'Schwer' };
-
   const TOPIC_LABELS = { economy: 'Wirtschaft', society: 'Gesellschaft', environment: 'Umwelt' };
 
   const QUESTIONS = [
-    // ───────────────────────────── Leicht ─────────────────────────────
+    // ──────────────────────── Leicht: 1 oder 2 Punkte ────────────────────────
     {
       id: 'e01',
-      level: 'easy',
+      points: 2,
       topic: 'environment',
       question: 'Wie viel von Deutschlands Fläche ist mit Wald bedeckt?',
       answers: ['Etwa ein Drittel', 'Etwa ein Zehntel', 'Mehr als zwei Drittel'],
@@ -45,7 +46,7 @@
     },
     {
       id: 'e02',
-      level: 'easy',
+      points: 1,
       topic: 'economy',
       question: 'Welches dieser Dinge wird aus Holz hergestellt?',
       answers: ['Papier', 'Glas', 'Beton'],
@@ -54,16 +55,16 @@
     },
     {
       id: 'e03',
-      level: 'easy',
+      points: 1,
       topic: 'environment',
       question: 'Was geben Bäume an die Luft ab, das wir zum Atmen brauchen?',
       answers: ['Sauerstoff', 'Kohlendioxid', 'Ruß'],
       explanation:
-        'Bei der Fotosynthese nehmen Bäume Kohlendioxid auf und geben Sauerstoff ab.',
+        'Bei der Fotosynthese nehmen Bäume Kohlendioxid auf und geben Sauerstoff ab. Im deutschen Wald stehen rund 90 Milliarden Bäume.',
     },
     {
       id: 'e04',
-      level: 'easy',
+      points: 2,
       topic: 'society',
       question: 'Darf in Deutschland jeder zur Erholung in den Wald gehen?',
       answers: [
@@ -76,7 +77,7 @@
     },
     {
       id: 'e05',
-      level: 'easy',
+      points: 1,
       topic: 'economy',
       question: 'Welcher Beruf hängt direkt vom Wald ab?',
       answers: ['Försterin', 'Bäckerin', 'Pilotin'],
@@ -85,7 +86,7 @@
     },
     {
       id: 'e06',
-      level: 'easy',
+      points: 2,
       topic: 'environment',
       question: 'Was passiert bei starkem Regen mit dem Wasser im Wald?',
       answers: [
@@ -98,7 +99,7 @@
     },
     {
       id: 'e07',
-      level: 'easy',
+      points: 1,
       topic: 'society',
       question: 'Wie ist es an einem heißen Sommertag im Wald?',
       answers: ['Kühler als in der Stadt', 'Heißer als in der Stadt', 'Genauso heiß wie in der Stadt'],
@@ -107,25 +108,25 @@
     },
     {
       id: 'e08',
-      level: 'easy',
+      points: 2,
       topic: 'environment',
       question: 'Welches Gas nehmen Bäume aus der Luft auf und speichern es als Kohlenstoff im Holz?',
       answers: ['Kohlendioxid (CO₂)', 'Sauerstoff', 'Helium'],
       explanation:
-        'Bäume binden CO₂ und bremsen so den Klimawandel. Verschwindet der Wald, gelangt dieser Kohlenstoff wieder in die Luft.',
+        'Bäume binden CO₂ und bremsen so den Klimawandel. Verschwände der deutsche Wald, würde dieser Kohlenstoff wieder in die Luft gelangen.',
     },
     {
       id: 'e09',
-      level: 'easy',
+      points: 1,
       topic: 'society',
       question: 'Welches Märchen spielt im Wald?',
       answers: ['Hänsel und Gretel', 'Die Prinzessin auf der Erbse', 'Des Kaisers neue Kleider'],
       explanation:
-        'In vielen deutschen Märchen ist der Wald ein wichtiger Ort. Er gehört zu unserer Kultur und unseren Geschichten.',
+        'Hänsel und Gretel stammt aus der Sammlung der Brüder Grimm. In vielen deutschen Märchen ist der Wald ein wichtiger Ort. Er gehört zu unserer Kultur.',
     },
     {
       id: 'e10',
-      level: 'easy',
+      points: 1,
       topic: 'economy',
       question: 'Deutschland hat keinen Wald mehr, braucht aber weiter Holz. Was nun?',
       answers: [
@@ -138,16 +139,16 @@
     },
     {
       id: 'e11',
-      level: 'easy',
+      points: 1,
       topic: 'environment',
       question: 'Was hält an einem steilen Hang den Boden fest?',
       answers: ['Die Wurzeln der Bäume', 'Der Wind', 'Das Sonnenlicht'],
       explanation:
-        'Wurzeln wirken wie ein Netz im Boden. Ohne Wald kann Regen die Erde wegspülen, und Hänge rutschen leichter ab.',
+        'Wurzeln wirken wie ein Netz im Boden. Ohne Wald würde Regen in den Alpen und Mittelgebirgen die Erde wegspülen, und Hänge würden leichter abrutschen.',
     },
     {
       id: 'e12',
-      level: 'easy',
+      points: 2,
       topic: 'society',
       question: 'Was filtern Wälder aus der Luft?',
       answers: ['Staub und Ruß', 'Sauerstoff', 'Wolken'],
@@ -156,7 +157,7 @@
     },
     {
       id: 'e13',
-      level: 'easy',
+      points: 2,
       topic: 'economy',
       question: 'Warum heißt Holz „nachwachsender Rohstoff“?',
       answers: ['Weil neue Bäume nachwachsen', 'Weil Holz niemals kaputtgeht', 'Weil man es aus Erdöl herstellt'],
@@ -165,7 +166,7 @@
     },
     {
       id: 'e14',
-      level: 'easy',
+      points: 1,
       topic: 'environment',
       question: 'Für wen ist der Wald ein Zuhause?',
       answers: [
@@ -178,7 +179,7 @@
     },
     {
       id: 'e15',
-      level: 'easy',
+      points: 2,
       topic: 'economy',
       question: 'Womit verdienen Waldbesitzer hauptsächlich Geld?',
       answers: ['Mit dem Verkauf von Holz', 'Mit dem Verkauf von Laub', 'Mit Eintrittskarten für den Wald'],
@@ -187,7 +188,7 @@
     },
     {
       id: 'e16',
-      level: 'easy',
+      points: 1,
       topic: 'society',
       question: 'Wovor schützt ein Waldstreifen zwischen Autobahn und Wohngebiet?',
       answers: ['Vor Lärm und Abgasen', 'Vor Erdbeben', 'Vor Gewittern'],
@@ -196,7 +197,7 @@
     },
     {
       id: 'e17',
-      level: 'easy',
+      points: 2,
       topic: 'environment',
       question: 'Was ist ein Mischwald?',
       answers: ['Ein Wald mit verschiedenen Baumarten', 'Ein Wald nur aus Fichten', 'Ein Wald mit Wiesen und Äckern'],
@@ -205,7 +206,7 @@
     },
     {
       id: 'e18',
-      level: 'easy',
+      points: 2,
       topic: 'society',
       question: 'Was bedeutet die Redewendung „auf dem Holzweg sein“?',
       answers: ['Sich irren', 'Im Wald spazieren gehen', 'Holz transportieren'],
@@ -214,7 +215,7 @@
     },
     {
       id: 'e19',
-      level: 'easy',
+      points: 1,
       topic: 'economy',
       question: 'Welche Urlaubsregion lebt von Gästen, die wegen des Waldes kommen?',
       answers: ['Der Schwarzwald', 'Die Insel Helgoland', 'Der Hamburger Hafen'],
@@ -223,7 +224,7 @@
     },
     {
       id: 'e20',
-      level: 'easy',
+      points: 2,
       topic: 'economy',
       question: 'Womit heizen Haushalte mit Kaminofen oder Pelletheizung?',
       answers: ['Mit Holz', 'Mit Sand', 'Mit Meerwasser'],
@@ -231,10 +232,10 @@
         'Scheitholz, Pellets und Hackschnitzel stammen aus dem Wald. Ohne Wald bräuchten diese Haushalte eine andere Heizung.',
     },
 
-    // ───────────────────────────── Mittel ─────────────────────────────
+    // ──────────────────────── Mittel: 3 oder 4 Punkte ────────────────────────
     {
       id: 'm01',
-      level: 'medium',
+      points: 4,
       topic: 'economy',
       question: 'Wie viele Menschen arbeiten in Deutschland in der Forst- und Holzwirtschaft?',
       answers: ['Rund 1 Million', 'Rund 100.000', 'Rund 10.000'],
@@ -243,7 +244,7 @@
     },
     {
       id: 'm02',
-      level: 'medium',
+      points: 4,
       topic: 'economy',
       question: 'Wem gehört fast die Hälfte des deutschen Waldes?',
       answers: ['Privatleuten', 'Dem Bund', 'Der Europäischen Union'],
@@ -252,7 +253,7 @@
     },
     {
       id: 'm03',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Warum liegen so viele Wasserschutzgebiete im Wald?',
       answers: [
@@ -265,7 +266,7 @@
     },
     {
       id: 'm04',
-      level: 'medium',
+      points: 4,
       topic: 'society',
       question: 'Wie viele Menschen in Deutschland gehen mindestens einmal im Jahr in den Wald?',
       answers: ['Mehr als drei Viertel', 'Etwa ein Viertel', 'Etwa jeder Zehnte'],
@@ -274,7 +275,7 @@
     },
     {
       id: 'm05',
-      level: 'medium',
+      points: 3,
       topic: 'environment',
       question: 'Seit 2018 sind in Deutschland große Waldflächen abgestorben. Was waren die Hauptursachen?',
       answers: ['Dürre und Borkenkäfer', 'Vulkanasche und Erdbeben', 'Zu viele Wanderer'],
@@ -283,7 +284,7 @@
     },
     {
       id: 'm06',
-      level: 'medium',
+      points: 4,
       topic: 'economy',
       question: 'Wofür ist Holz in Deutschland der wichtigste erneuerbare Energieträger?',
       answers: ['Für Wärme', 'Für Strom', 'Für Kraftstoff'],
@@ -292,7 +293,7 @@
     },
     {
       id: 'm07',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Was schützt in den Alpen viele Dörfer und Straßen vor Lawinen und Steinschlag?',
       answers: ['Der Schutzwald', 'Der Nebel im Tal', 'Die Almwiesen'],
@@ -301,7 +302,7 @@
     },
     {
       id: 'm08',
-      level: 'medium',
+      points: 4,
       topic: 'environment',
       question: 'Wie viele Bäume stehen ungefähr in Deutschlands Wäldern?',
       answers: ['Rund 90 Milliarden', 'Rund 90 Millionen', 'Rund 900.000'],
@@ -309,7 +310,7 @@
     },
     {
       id: 'm09',
-      level: 'medium',
+      points: 3,
       topic: 'economy',
       question: 'Was würde mit dem Holzpreis passieren, wenn Deutschland alles Holz importieren müsste?',
       answers: ['Er würde steigen', 'Er würde sinken', 'Er bliebe gleich'],
@@ -318,7 +319,7 @@
     },
     {
       id: 'm10',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Was bedeutet „Waldbaden“?',
       answers: [
@@ -327,11 +328,11 @@
         'Junge Bäume gießen',
       ],
       explanation:
-        'Die Idee kommt aus Japan. Studien zeigen: Ein Aufenthalt im Wald senkt Stress. Ohne Wald würde dieser Erholungsort fehlen.',
+        'Studien zeigen: Ein Aufenthalt im Wald senkt Stress. Auch in Deutschland ist Waldbaden beliebt. Ohne Wald würde dieser Erholungsort fehlen.',
     },
     {
       id: 'm11',
-      level: 'medium',
+      points: 4,
       topic: 'environment',
       question: 'Der Wald ist ein Kohlenstoffspeicher. Was heißt das?',
       answers: [
@@ -344,7 +345,7 @@
     },
     {
       id: 'm12',
-      level: 'medium',
+      points: 3,
       topic: 'economy',
       question: 'Welche Industrie bräuchte ohne Wald dringend einen neuen Rohstoff?',
       answers: ['Die Papier- und Möbelindustrie', 'Die Fischerei', 'Die Hersteller von Computerchips'],
@@ -353,7 +354,7 @@
     },
     {
       id: 'm13',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Was passiert in Städten, wenn die Wälder in der Umgebung fehlen?',
       answers: [
@@ -366,7 +367,7 @@
     },
     {
       id: 'm14',
-      level: 'medium',
+      points: 4,
       topic: 'environment',
       question: 'Wie alt ist der deutsche Wald im Durchschnitt?',
       answers: ['Rund 80 Jahre', 'Rund 8 Jahre', 'Rund 800 Jahre'],
@@ -375,7 +376,7 @@
     },
     {
       id: 'm15',
-      level: 'medium',
+      points: 4,
       topic: 'economy',
       question: 'Warum ist Bauen mit Holz gut fürs Klima?',
       answers: [
@@ -388,7 +389,7 @@
     },
     {
       id: 'm16',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Was ist ein Waldkindergarten?',
       answers: [
@@ -401,7 +402,7 @@
     },
     {
       id: 'm17',
-      level: 'medium',
+      points: 3,
       topic: 'environment',
       question: 'Was passiert mit Specht, Wildkatze und Hirschkäfer, wenn der Wald verschwindet?',
       answers: [
@@ -414,7 +415,7 @@
     },
     {
       id: 'm18',
-      level: 'medium',
+      points: 4,
       topic: 'environment',
       question: 'Welche Bundesländer haben den größten Waldanteil?',
       answers: [
@@ -427,7 +428,7 @@
     },
     {
       id: 'm19',
-      level: 'medium',
+      points: 3,
       topic: 'society',
       question: 'Das Bundeswaldgesetz nennt drei Aufgaben des Waldes: Nutzen, Schützen und …?',
       answers: ['Erholung', 'Verkehr', 'Verteidigung'],
@@ -436,7 +437,7 @@
     },
     {
       id: 'm20',
-      level: 'medium',
+      points: 4,
       topic: 'economy',
       question: 'Was passiert mit Äckern, wenn Wälder als Windschutz fehlen?',
       answers: [
@@ -448,10 +449,10 @@
         'Wälder bremsen den Wind und halten Feuchtigkeit in der Landschaft. Ohne sie hätte auch die Landwirtschaft schlechtere Ernten.',
     },
 
-    // ───────────────────────────── Schwer ─────────────────────────────
+    // ──────────────────────── Schwer: 5 oder 6 Punkte ────────────────────────
     {
       id: 'h01',
-      level: 'hard',
+      points: 6,
       topic: 'economy',
       question: 'Wie viel Umsatz macht die Forst- und Holzwirtschaft in Deutschland pro Jahr ungefähr?',
       answers: [
@@ -465,7 +466,7 @@
     },
     {
       id: 'h02',
-      level: 'hard',
+      points: 6,
       topic: 'environment',
       question: 'Welche Baumart hat die Fichte als häufigste Baumart in Deutschland abgelöst?',
       answers: ['Die Kiefer', 'Die Buche', 'Die Eiche', 'Die Douglasie'],
@@ -474,7 +475,7 @@
     },
     {
       id: 'h03',
-      level: 'hard',
+      points: 5,
       topic: 'economy',
       question: 'Wer prägte 1713 den Gedanken der Nachhaltigkeit, weil das Holz knapp wurde?',
       answers: [
@@ -488,7 +489,7 @@
     },
     {
       id: 'h04',
-      level: 'hard',
+      points: 6,
       topic: 'environment',
       question: 'Wie viel Kohlenstoff ist im deutschen Wald gespeichert – in Bäumen, Totholz und Boden?',
       answers: [
@@ -502,7 +503,7 @@
     },
     {
       id: 'h05',
-      level: 'hard',
+      points: 6,
       topic: 'environment',
       question: 'Was stellte die Bundeswaldinventur 2022 zum Klimaschutz fest?',
       answers: [
@@ -516,7 +517,7 @@
     },
     {
       id: 'h06',
-      level: 'hard',
+      points: 6,
       topic: 'economy',
       question: 'Wie viel Holz wird in Deutschland pro Jahr ungefähr geerntet?',
       answers: [
@@ -530,7 +531,7 @@
     },
     {
       id: 'h07',
-      level: 'hard',
+      points: 5,
       topic: 'society',
       question: 'In welchem Gesetz steht, dass jeder den Wald zur Erholung betreten darf?',
       answers: ['Im Bundeswaldgesetz', 'Im Grundgesetz', 'In der Straßenverkehrsordnung', 'Im Jugendschutzgesetz'],
@@ -539,7 +540,7 @@
     },
     {
       id: 'h08',
-      level: 'hard',
+      points: 5,
       topic: 'environment',
       question: 'Wie viel Wasser kann unter einem Quadratmeter Waldboden gespeichert sein?',
       answers: ['Bis zu 200 Liter', 'Bis zu 2 Liter', 'Bis zu 20 Liter', 'Bis zu 2.000 Liter'],
@@ -548,7 +549,7 @@
     },
     {
       id: 'h09',
-      level: 'hard',
+      points: 5,
       topic: 'economy',
       question: 'Wie viele Menschen besitzen in Deutschland Wald?',
       answers: ['Rund 2 Millionen', 'Rund 2.000', 'Rund 20.000', 'Rund 200.000'],
@@ -557,7 +558,7 @@
     },
     {
       id: 'h10',
-      level: 'hard',
+      points: 5,
       topic: 'society',
       question: 'Welcher Wald wurde 1970 Deutschlands erster Nationalpark?',
       answers: ['Der Bayerische Wald', 'Der Schwarzwald', 'Der Harz', 'Der Teutoburger Wald'],
@@ -566,7 +567,7 @@
     },
     {
       id: 'h11',
-      level: 'hard',
+      points: 6,
       topic: 'economy',
       question: 'Wie viele Unternehmen gehören in Deutschland zur Forst- und Holzwirtschaft?',
       answers: ['Über 110.000', 'Etwa 1.100', 'Etwa 11.000', 'Über 1,1 Millionen'],
@@ -575,7 +576,7 @@
     },
     {
       id: 'h12',
-      level: 'hard',
+      points: 5,
       topic: 'environment',
       question: 'Wie sähe Deutschland ohne den Einfluss des Menschen von Natur aus?',
       answers: [
@@ -589,7 +590,7 @@
     },
     {
       id: 'h13',
-      level: 'hard',
+      points: 6,
       topic: 'economy',
       question: 'Wie viel teurer sind Lawinenverbauungen und Steinschlagnetze als ein gesunder Schutzwald?',
       answers: ['Etwa 10- bis 30-mal so teuer', 'Etwa doppelt so teuer', 'Etwa gleich teuer', 'Sie sind billiger'],
@@ -598,7 +599,7 @@
     },
     {
       id: 'h14',
-      level: 'hard',
+      points: 5,
       topic: 'environment',
       question: 'Wie viel CO₂ ist in einem Kubikmeter Holz ungefähr gebunden?',
       answers: ['Rund 1 Tonne', 'Rund 1 Kilogramm', 'Rund 10 Kilogramm', 'Rund 100 Tonnen'],
@@ -607,7 +608,7 @@
     },
     {
       id: 'h15',
-      level: 'hard',
+      points: 6,
       topic: 'environment',
       question: 'Wie viel Wald ging in Deutschland von 2018 bis 2021 durch Stürme, Dürre und Borkenkäfer verloren?',
       answers: ['Rund 500.000 Hektar', 'Rund 5.000 Hektar', 'Rund 50.000 Hektar', 'Rund 5 Millionen Hektar'],
@@ -616,7 +617,7 @@
     },
     {
       id: 'h16',
-      level: 'hard',
+      points: 5,
       topic: 'economy',
       question: 'Deutschland ist in Europa der größte Hersteller von …?',
       answers: ['Papier', 'Kork', 'Bambus', 'Kautschuk'],
@@ -625,7 +626,7 @@
     },
     {
       id: 'h17',
-      level: 'hard',
+      points: 5,
       topic: 'society',
       question: 'Was war die „Holznot“ um das Jahr 1700?',
       answers: [
@@ -639,7 +640,7 @@
     },
     {
       id: 'h18',
-      level: 'hard',
+      points: 6,
       topic: 'society',
       question: 'Wie viel Staub und Ruß kann ein Hektar Wald pro Jahr aus der Luft filtern?',
       answers: ['Bis zu 50 Tonnen', 'Bis zu 50 Kilogramm', 'Bis zu 500 Kilogramm', 'Bis zu 5.000 Tonnen'],
@@ -648,7 +649,7 @@
     },
     {
       id: 'h19',
-      level: 'hard',
+      points: 6,
       topic: 'society',
       question: 'Wie viel der Fläche aller deutschen Wasserschutzgebiete liegt im Wald?',
       answers: ['Über 40 Prozent', 'Etwa 4 Prozent', 'Etwa 15 Prozent', 'Über 90 Prozent'],
@@ -657,7 +658,7 @@
     },
     {
       id: 'h20',
-      level: 'hard',
+      points: 5,
       topic: 'society',
       question: 'Wie viel kühler als in der Stadt ist es an heißen Sommertagen im Wald?',
       answers: ['Etwa 3 bis 6 Grad', 'Etwa 0,1 Grad', 'Etwa 15 bis 20 Grad', 'Gar nicht – es ist gleich warm'],
@@ -667,53 +668,71 @@
   ];
 
   /*
-   * Die Ereignisfelder auf dem Brett. Der Schlüssel ist das Feld, auf dem die
-   * Leiter oder Rutsche beginnt (siehe game.js).
-   * Leitern stehen für das, was der Wald uns gibt. Rutschen zeigen, was ohne
-   * Wald passieren würde.
+   * Die Leitern auf dem Brett. Der Schlüssel ist das Feld am unteren Ende der
+   * Leiter (siehe game.js). Jede Leiter hat zwei Texte:
+   *   up   – wer unten landet, steigt hinauf: Das gibt uns der Wald.
+   *   down – wer oben landet, muss hinunter: Das passiert ohne Wald.
    */
-  const BOARD_EVENTS = {
-    // Leitern
-    4: {
-      title: 'Aufforstung',
-      text: 'Eure Klasse pflanzt junge Bäume auf einer kahlen Fläche. Neuer Wald wächst heran.',
+  const LADDER_EVENTS = {
+    3: {
+      up: {
+        title: 'Aufforstung',
+        text: 'Eure Klasse pflanzt junge Bäume auf einer kahlen Fläche. Neuer Wald wächst heran.',
+      },
+      down: {
+        title: 'Kahlschlag',
+        text: 'Am Hang wurden alle Bäume gefällt. Ohne Wurzeln spült der nächste Starkregen den Boden weg.',
+      },
+    },
+    7: {
+      up: {
+        title: 'Holzbau',
+        text: 'Im Ort entsteht eine Schule aus Holz aus dem eigenen Wald. Das schafft Arbeit in der Region und hält Kohlenstoff über Jahrzehnte fest.',
+      },
+      down: {
+        title: 'Sägewerk schließt',
+        text: 'Kein Wald, kein Holz: Das Sägewerk macht dicht, und im Ort gehen Arbeitsplätze verloren.',
+      },
     },
     9: {
-      title: 'Holzbau',
-      text: 'Im Ort entsteht ein Haus aus Holz. Der Rohstoff wächst nach und hält Kohlenstoff über Jahrzehnte fest.',
+      up: {
+        title: 'Wasserspeicher',
+        text: 'Der Waldboden saugt den Regen auf wie ein Schwamm und filtert ihn. Daraus wird sauberes Trinkwasser.',
+      },
+      down: {
+        title: 'Hochwasser',
+        text: 'Ohne Waldboden fließt der Regen sofort ab. Der Bach tritt über die Ufer und überschwemmt das Dorf.',
+      },
     },
-    16: {
-      title: 'Mischwald',
-      text: 'Statt nur Fichten wachsen hier viele Baumarten. Dieser Wald übersteht Dürre und Borkenkäfer besser.',
-    },
-    26: {
-      title: 'Wanderurlaub',
-      text: 'Gäste kommen zum Wandern in den Wald. Gasthöfe, Hotels und Läden im Ort verdienen daran.',
-    },
-    33: {
-      title: 'Nachhaltige Ernte',
-      text: 'Der Forstbetrieb schlägt nur so viel Holz, wie nachwächst. So bleiben Wald und Arbeitsplätze erhalten.',
-    },
-    // Rutschen
     14: {
-      title: 'Staubige Luft',
-      text: 'Ohne Bäume fängt niemand Staub und Ruß ab. Die Luft in der Stadt wird schlechter.',
+      up: {
+        title: 'Wanderurlaub',
+        text: 'Gäste kommen zum Wandern in den Schwarzwald. Hotels, Gasthöfe und Läden verdienen daran.',
+      },
+      down: {
+        title: 'Keine Gäste mehr',
+        text: 'Ohne Wald bleiben die Wanderer weg. Im Harz müssen Hotels und Gasthöfe schließen.',
+      },
     },
-    24: {
-      title: 'Sägewerk schließt',
-      text: 'Kein Wald, kein Holz: Das Sägewerk macht dicht, und im Ort gehen Arbeitsplätze verloren.',
+    20: {
+      up: {
+        title: 'Frische Luft',
+        text: 'Der Stadtwald kühlt an heißen Tagen und filtert Staub aus der Luft. Viele Menschen erholen sich dort.',
+      },
+      down: {
+        title: 'Hitzesommer',
+        text: 'Ohne kühlenden Wald heizt sich die Stadt auf, und die Luft wird staubig. Vor allem ältere Menschen leiden darunter.',
+      },
     },
-    32: {
-      title: 'Hitzesommer',
-      text: 'Ohne kühlenden Wald heizt sich die Stadt auf. Vor allem ältere Menschen leiden unter der Hitze.',
-    },
-    35: {
-      title: 'Hochwasser',
-      text: 'Ohne Waldboden fließt der Regen sofort ab. Der Bach tritt über die Ufer und überschwemmt das Dorf.',
-    },
-    48: {
-      title: 'Erdrutsch',
-      text: 'Ohne Wurzeln hält nichts mehr den Hang fest. Nach starkem Regen rutscht die Erde ins Tal.',
+    27: {
+      up: {
+        title: 'Schutzwald',
+        text: 'In den bayerischen Alpen hält der Bergwald Lawinen und Steinschlag auf. Dorf und Straße bleiben sicher.',
+      },
+      down: {
+        title: 'Lawine',
+        text: 'Ohne Schutzwald donnert eine Lawine ins Tal. Die Straße ist gesperrt, das Dorf ist abgeschnitten.',
+      },
     },
   };
 
@@ -806,10 +825,9 @@
   const namespace = (global.WaldLeiternspiel = global.WaldLeiternspiel || {});
   namespace.content = {
     RESEARCH_QUESTION,
-    LEVEL_LABELS,
     TOPIC_LABELS,
     QUESTIONS,
-    BOARD_EVENTS,
+    LADDER_EVENTS,
     CONCLUSION,
     SOURCES,
   };

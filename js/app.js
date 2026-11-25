@@ -1,10 +1,5 @@
-/**
- * Wald-Leiternspiel – the interface.
- *
- * Draws the board, lets the reader draw a card, asks the question and moves
- * the pieces. All rules live in game.js; this file only turns a game state
- * into what is on screen and turns taps into the next state.
- */
+// Wald-Leiternspiel: Anzeige und Bedienung
+// Zeichnet Brett, Stapel und Dialoge. Die Regeln stehen in game.js.
 (function () {
   'use strict';
 
@@ -17,7 +12,7 @@
   const STEP_MS = 230;
   const GLIDE_MS = 800;
 
-  /** Where each player's piece sits inside a cell, so four pieces never overlap. */
+  // Wo die Figuren im Feld stehen, damit sich vier nicht überdecken
   const SLOTS = [[-20, 0], [20, 0], [-20, 32], [20, 32]];
 
   const questionsById = new Map(content.QUESTIONS.map((question) => [question.id, question]));
@@ -25,15 +20,14 @@
   const narrowScreen = window.matchMedia('(max-width: 59.99rem)');
   const $ = (selector) => document.querySelector(selector);
 
-  // ── What the interface remembers ──────────────────────────────────────────
 
-  let state = null;            // the game; null while the players are being chosen
-  let busy = false;            // a piece is on the move, input waits
-  let status = '';             // one sentence about what just happened
-  let resultDismissed = false; // the result dialog was closed to look at the board
-  let shownQuestion = '';      // which card and phase the dialog currently shows
+  let state = null;            // Spielstand, null beim Startbildschirm
+  let busy = false;            // Figur läuft gerade
+  let status = '';             // was zuletzt passiert ist
+  let resultDismissed = false; // Ergebnis geschlossen, um das Brett anzusehen
+  let shownQuestion = '';      // welche Karte gerade im Dialog steht
 
-  // ── Small builders ────────────────────────────────────────────────────────
+  // Hilfsfunktionen für HTML (h) und SVG (s)
 
   function build(create, tag, props, children) {
     const node = create(tag);
@@ -54,12 +48,12 @@
   const questions = (count) => (count === 1 ? '1 Frage' : `${count} Fragen`);
   const round = (value) => Math.round(value * 10) / 10;
 
-  /** Who reads the card out and who answers it. */
+  // Wer liest vor, wer antwortet
   function roles() {
     return { reader: state.reader, answerer: game.answererOf(state) };
   }
 
-  // ── Board geometry ────────────────────────────────────────────────────────
+  // Brett
 
   function cellOrigin(field) {
     const { column, row } = game.cellPosition(field);
@@ -76,9 +70,7 @@
     return { x: x + SLOTS[player][0], y: y + SLOTS[player][1] };
   }
 
-  // ── Trail markers: the playing pieces ─────────────────────────────────────
-  // German hiking trails are marked with simple shapes painted on a white
-  // plate. Each player gets one, so pieces differ by shape as well as colour.
+  // Spielfiguren sehen aus wie Wanderweg-Zeichen (Punkt, Kreuz, Raute, Dreieck)
 
   function markerSign(player) {
     const cls = `marke__zeichen marke__zeichen--${player}`;
@@ -103,9 +95,8 @@
     );
   }
 
-  // ── Drawing the board ─────────────────────────────────────────────────────
 
-  /** Map signatures as on a German topographic map: deciduous and coniferous. */
+  // Laub- und Nadelbaum-Zeichen wie auf einer Wanderkarte
   function signaturePattern(id, signature) {
     const at = (x, y) => s('path', { class: 'kartenzeichen', d: signature, transform: `translate(${x} ${y})` });
     return s(
@@ -117,11 +108,7 @@
     );
   }
 
-  /**
-   * A ladder stands in one column. It meets its bottom field low and a little
-   * left of centre and its top field high on the right, so it leans slightly
-   * and stays clear of the numbers in the top-left corner of every field.
-   */
+  // Leiter leicht schräg zeichnen, rechts von den Feldnummern
   function ladderShape(ladder) {
     const low = cellOrigin(ladder.bottom);
     const high = cellOrigin(ladder.top);
@@ -148,7 +135,7 @@
     return s('g', {}, s('path', { class: 'leiter__kante', d }), s('path', { class: 'leiter__holz', d }));
   }
 
-  /** A small arrow under the field number: up at the bottom of a ladder, down at the top. */
+  // Pfeil unter der Feldnummer: hoch am unteren Ende, runter am oberen
   function arrowPath(x, y, direction) {
     return direction === 'up' ? `M${x + 20} ${y + 40}l9 15h-18z` : `M${x + 11} ${y + 41}h18l-9 15z`;
   }
@@ -178,7 +165,7 @@
       else if (ladder) kind = ladder.direction === 'up' ? 'feld--unten' : 'feld--oben';
 
       cells.push(s('rect', { class: `feld ${kind}`, x, y, width: CELL, height: CELL }));
-      // The top of a ladder is bare ground: no forest signature there.
+      // oberes Leiterende = kahler Boden, also keine Bäume
       if (!isGoal && !(ladder && ladder.direction === 'down')) {
         cells.push(
           s('rect', {
@@ -216,7 +203,7 @@
         s(
           'clipPath',
           { id: 'brett-rand' },
-          s('rect', { width: BOARD.columns * CELL, height: BOARD.rows * CELL, rx: 22 }),
+          s('rect', { width: BOARD.columns * CELL, height: BOARD.rows * CELL, rx: 12 }),
         ),
       ),
       s(
@@ -230,7 +217,7 @@
     );
   }
 
-  // ── Pieces ────────────────────────────────────────────────────────────────
+  // Figuren
 
   function place(piece, field) {
     const { x, y } = piecePosition(field, Number(piece.dataset.player));
@@ -269,7 +256,7 @@
       piece.classList.toggle('stein--aktiv', player === active);
     }
 
-    // Whoever answers next lies on top of a shared cell.
+    // wer antwortet, liegt oben
     if (active >= 0) layer.append(pieceFor(active));
   }
 
@@ -294,7 +281,7 @@
     piece.classList.remove('stein--gleitet');
   }
 
-  // ── The panel ─────────────────────────────────────────────────────────────
+  // Rechte Seite: Startbildschirm, Zug, Spielstand
 
   function selectedCount() {
     const checked = document.querySelector('input[name="count"]:checked');
@@ -308,7 +295,7 @@
     }
   }
 
-  /** "Ada liest vor, Ben antwortet", each with their trail marker. */
+  // "Ada liest vor, Ben antwortet"
   function rolesLine() {
     const { reader, answerer } = roles();
     return [
@@ -376,7 +363,7 @@
     $('#standings').replaceChildren(...state.players.map((player, index) => standingRow(player, index, current)));
   }
 
-  // ── Dialogs ───────────────────────────────────────────────────────────────
+  // Dialoge
 
   function setOpen(dialog, open) {
     if (open && !dialog.open) dialog.showModal();
@@ -459,7 +446,7 @@
   }
 
   function eventArt(direction) {
-    // A small picture of what is about to happen, drawn like the board.
+    // kleines Bild: Leiter mit Pfeil
     const ground = s('rect', { class: `ereignis__grund--${direction}`, width: 120, height: 84 });
     const d = 'M36 78 48 6M60 78 72 6M38 66H62M40 54H64M42 42H66M44 30H68M46 18H70';
     const arrow = direction === 'up' ? 'M97 62V20M86 32 97 20 108 32' : 'M97 20V62M86 50 97 62 108 50';
@@ -543,11 +530,10 @@
     }
   }
 
-  // ── One render for everything ─────────────────────────────────────────────
+  // Alles neu anzeigen
 
   function render() {
-    // While a piece travels the screen stays as it is: the deck locks, and
-    // the next turn only appears once the piece has arrived.
+    // solange eine Figur läuft, warten
     if (busy) {
       $('#btn-draw').disabled = true;
       return;
@@ -582,15 +568,14 @@
     save();
   }
 
-  // ── Saving ────────────────────────────────────────────────────────────────
-  // A reload in the middle of a lesson should not cost the class its game.
+  // Speichern, damit das Spiel ein Neuladen übersteht
 
   function save() {
     try {
       if (state) localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, status }));
       else localStorage.removeItem(STORAGE_KEY);
     } catch {
-      /* private window or blocked storage: the game simply isn't remembered */
+      // z. B. privates Fenster: dann wird nicht gespeichert
     }
   }
 
@@ -598,16 +583,16 @@
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (!saved || !game.isValidState(saved.state)) return;
-      // The questions may have been edited since the game was saved.
+      // Fragen könnten inzwischen geändert worden sein
       if (!saved.state.cards.every((id) => questionsById.has(id))) return;
       state = saved.state;
       status = typeof saved.status === 'string' ? saved.status : '';
     } catch {
-      /* nothing usable stored */
+      // nichts Brauchbares gespeichert
     }
   }
 
-  // ── What the players do ───────────────────────────────────────────────────
+  // Was die Spieler tun
 
   function startGame() {
     const names = [];
@@ -616,7 +601,7 @@
     status = '';
     resultDismissed = false;
     render();
-    // On a phone the panel sits below the board: bring both back into view.
+    // am Handy zurück nach oben zum Brett scrollen
     if (narrowScreen.matches) {
       $('.tisch').scrollIntoView({ block: 'start', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
     }
@@ -658,7 +643,7 @@
     $('#btn-continue').focus();
   }
 
-  /** Close the dialogs, let the piece travel, then show whatever comes next. */
+  // Dialog zu, Figur laufen lassen, dann weiter
   async function moving(travel) {
     busy = true;
     for (const id of ['#dlg-question', '#dlg-event']) setOpen($(id), false);
@@ -705,7 +690,7 @@
     moving(() => glide(index, ladder.to));
   }
 
-  // ── Wiring ────────────────────────────────────────────────────────────────
+  // Knöpfe verbinden
 
   function wire() {
     for (const radio of document.querySelectorAll('input[name="count"]')) {
@@ -743,8 +728,7 @@
       button.addEventListener('click', () => button.closest('dialog').close());
     }
 
-    // A question has to be answered and a ladder taken: Escape must not skip
-    // them. If the browser closes the dialog anyway, put it back.
+    // Frage und Leiter kann man nicht mit Escape überspringen
     for (const id of ['#dlg-question', '#dlg-event']) {
       $(id).addEventListener('cancel', (event) => event.preventDefault());
       $(id).addEventListener('close', () => {
@@ -752,7 +736,7 @@
       });
     }
 
-    // A to D (or 1 to 4) answer the open question.
+    // Tasten A bis D (oder 1 bis 4) wählen eine Antwort
     $('#dlg-question').addEventListener('keydown', (event) => {
       if (!state || state.phase !== 'question' || event.ctrlKey || event.metaKey || event.altKey) return;
       const key = event.key.toLowerCase();

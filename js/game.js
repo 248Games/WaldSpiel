@@ -1,23 +1,7 @@
-/**
- * Wald-Leiternspiel – the rules.
- *
- * A board game with question cards instead of dice, played like the printed
- * version: one player draws a card from a shuffled pile and reads it out, the
- * next player answers. A correct answer moves the answering player as many
- * fields as the card has points; a wrong one leaves them where they are. Then
- * the player who answered reads the next card to the player after them.
- *
- * There are only ladders. Landing on the bottom end of a ladder takes a player
- * up to its top; landing on the top end takes them down to its bottom.
- *
- * Everything here is a pure function over a plain JSON state: no DOM, no
- * timers, no Math.random (the state carries its own seed). That keeps a game
- * reproducible, lets it be saved with JSON.stringify, and makes the rules
- * testable without a browser.
- *
- * Classic script on purpose (no import/export) so index.html works when it is
- * opened straight from disk; the tests load it for its side effect.
- */
+// Wald-Leiternspiel: die Spielregeln
+// Hier gibt es keine Anzeige, nur den Spielstand (ein normales Objekt).
+// Jede Funktion bekommt den alten Stand und gibt einen neuen zurück.
+// Kein import/export, damit index.html auch direkt von der Festplatte läuft.
 (function (global) {
   'use strict';
 
@@ -27,25 +11,18 @@
   const MAX_POINTS = 6;
   const STATE_VERSION = 2;
 
-  /**
-   * Fields run 1..36 in a serpentine from the bottom-left corner, so field 36
-   * ends up top-left. Everyone starts on field 1.
-   *
-   *   36 35 34 33 32 31
-   *   25 26 27 28 29 30
-   *   24 23 22 21 20 19
-   *   13 14 15 16 17 18
-   *   12 11 10  9  8  7
-   *    1  2  3  4  5  6
-   *
-   * Each ladder stands in one column, so it never crosses another field's
-   * number. No field belongs to two ladders, and no ladder touches the start
-   * or the goal, so a move never sets off a second ladder.
-   *
-   * Size and ladders were settled by simulation (see the tests): two players
-   * who answer three out of four questions correctly need about 18 questions
-   * in all, and four games out of five end after 11 to 30.
-   */
+  // Das Brett (Feld 1 unten links, Ziel 36 oben links):
+  //
+  //   36 35 34 33 32 31
+  //   25 26 27 28 29 30
+  //   24 23 22 21 20 19
+  //   13 14 15 16 17 18
+  //   12 11 10  9  8  7
+  //    1  2  3  4  5  6
+  //
+  // Jede Leiter steht in einer Spalte. Kein Feld gehört zu zwei Leitern.
+  // Größe und Leitern habe ich ausprobiert, bis ein Spiel zu zweit
+  // ungefähr 15 bis 30 Fragen dauert (siehe Tests).
   const BOARD = Object.freeze({
     columns: 6,
     rows: 6,
@@ -66,7 +43,7 @@
     LADDER_ENDS.set(ladder.top, ladder);
   }
 
-  /** Column and row of a field, both 0-based, with row 0 at the bottom. */
+  // Spalte und Reihe eines Feldes (Reihe 0 ist unten)
   function cellPosition(field) {
     const index = field - 1;
     const row = Math.floor(index / BOARD.columns);
@@ -74,10 +51,7 @@
     return { column: row % 2 === 0 ? offset : BOARD.columns - 1 - offset, row };
   }
 
-  /**
-   * The ladder that has an end on a field, and where it takes a player who
-   * lands there: up from the bottom end, down from the top end. Null if none.
-   */
+  // Leiter auf diesem Feld? Unten = hinauf, oben = hinunter. Sonst null.
   function ladderAt(field) {
     const ladder = LADDER_ENDS.get(field);
     if (!ladder) return null;
@@ -91,9 +65,9 @@
     };
   }
 
-  // ── Randomness ────────────────────────────────────────────────────────────
+  // Zufall (mit eigenem Startwert, damit die Tests immer gleich laufen)
 
-  /** One step of mulberry32. Advances state.seed and returns a float in [0, 1). */
+  // Zufallszahl zwischen 0 und 1 (mulberry32)
   function nextRandom(state) {
     state.seed = (state.seed + 0x6d2b79f5) | 0;
     let t = state.seed;
@@ -115,7 +89,7 @@
     return result;
   }
 
-  // ── State ─────────────────────────────────────────────────────────────────
+  // Spielstand
 
   const clone = (state) => JSON.parse(JSON.stringify(state));
 
@@ -125,32 +99,23 @@
     }
   }
 
-  /** The player who answers the card that the reader reads out: the next one. */
+  // Wer antwortet: der Spieler nach dem Vorleser
   function answererOf(state) {
     return (state.reader + 1) % state.players.length;
   }
 
-  /** Shuffle every card into a new pile. The top card is the last one. */
+  // Alle Karten neu mischen. Die oberste Karte ist die letzte im Array.
   function freshPile(state) {
     const pile = shuffled(state, state.cards);
-    // After a reshuffle, don't let the card the players have just seen come
-    // straight back up.
+    // Die gerade gezogene Karte soll nicht sofort wieder oben liegen
     if (pile.length > 1 && pile[pile.length - 1] === state.lastDrawn) {
       [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]];
     }
     return pile;
   }
 
-  /**
-   * Start a game.
-   *
-   * @param {string[]} names  Two to four player names in seating order: the
-   *                          youngest first, then each player to the left of
-   *                          the one before. Blanks get a default.
-   * @param {object}   options
-   * @param {Array}    options.questions  The question list from content.js.
-   * @param {number}   [options.seed]     Fixes the shuffle; defaults to the clock.
-   */
+  // Neues Spiel. names: 2 bis 4 Namen, der jüngste Spieler zuerst,
+  // dann immer der Spieler links daneben.
   function createGame(names, { questions, seed = Date.now() } = {}) {
     if (!Array.isArray(names) || names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) {
       throw new Error(`A game needs ${MIN_PLAYERS} to ${MAX_PLAYERS} players.`);
@@ -169,12 +134,11 @@
         correct: 0,
         wrong: 0,
       })),
-      // The youngest player reads the first card.
+      // der jüngste Spieler liest zuerst vor
       reader: 0,
-      // How many cards have been drawn in this game.
+      // gezogene Karten in diesem Spiel
       asked: 0,
-      // Every card in the game, with its points and how many answers it has.
-      // The state keeps these so that reshuffling needs nothing from outside.
+      // alle Karten mit Punkten und Anzahl der Antworten
       cards: [],
       points: {},
       answerCounts: {},
@@ -199,10 +163,7 @@
     return state;
   }
 
-  /**
-   * The same players back on the start field. The pile carries on where it
-   * was, so the next game does not repeat cards until all have been seen.
-   */
+  // Noch ein Spiel: alle zurück auf Start, der Stapel wird weiter benutzt
   function rematch(previous) {
     const state = clone(previous);
     for (const player of state.players) Object.assign(player, { field: 1, correct: 0, wrong: 0 });
@@ -218,7 +179,7 @@
     return state;
   }
 
-  /** The reader draws the top card of the pile; the pile is reshuffled when empty. */
+  // Vorleser zieht die oberste Karte (leerer Stapel wird neu gemischt)
   function drawCard(previous) {
     expectPhase(previous, 'draw', 'Drawing a card');
 
@@ -229,14 +190,13 @@
     state.asked += 1;
 
     const order = shuffled(state, Array.from({ length: state.answerCounts[id] }, (_, i) => i));
-    // `order[i]` is the index, in the question's own answer list, of the
-    // answer shown in position i. Answer 0 is always the correct one.
+    // order = Reihenfolge der Antworten auf dem Bildschirm. Antwort 0 ist richtig.
     state.question = { id, points: state.points[id], order };
     state.phase = 'question';
     return state;
   }
 
-  /** The answering player gives the answer shown at `shownIndex`. */
+  // Der Antwortende tippt eine Antwort an
   function answer(previous, shownIndex) {
     expectPhase(previous, 'question', 'Answering');
     const { order, points } = previous.question;
@@ -268,7 +228,7 @@
     return state;
   }
 
-  /** The player who has just answered reads the next card. */
+  // Wer gerade geantwortet hat, liest als Nächstes vor
   function endTurn(state) {
     state.reader = answererOf(state);
     state.question = null;
@@ -282,15 +242,8 @@
     state.phase = 'over';
   }
 
-  /**
-   * Carry the game forward after the answer has been revealed, and again after
-   * a ladder has been announced.
-   *
-   *   reveal ─ wrong ──────────────────────────→ next reader
-   *   reveal ─ right ─ plain field ────────────→ next reader
-   *                  ─ goal ───────────────────→ over
-   *                  ─ ladder end → event ─────→ next reader
-   */
+  // Weiter nach der Auflösung (und nach einer Leiter):
+  // falsch -> nächster Zug, richtig -> vorrücken, dann Ziel, Leiter oder nächster Zug
   function advance(previous) {
     const state = clone(previous);
 
@@ -308,7 +261,7 @@
     }
 
     if (state.phase === 'event') {
-      // One ladder per move: the other end of this ladder does not count.
+      // nur eine Leiter pro Zug
       state.players[state.move.player].field = state.move.ladder.to;
       endTurn(state);
       return state;
@@ -317,7 +270,7 @@
     throw new Error(`Nothing to advance in phase "${state.phase}".`);
   }
 
-  /** Whether a value read back from storage looks like a game this code can run. */
+  // Prüft, ob ein gespeicherter Spielstand noch passt
   function isValidState(state) {
     if (!state || typeof state !== 'object' || state.version !== STATE_VERSION) return false;
     if (!['draw', 'question', 'reveal', 'event', 'over'].includes(state.phase)) return false;

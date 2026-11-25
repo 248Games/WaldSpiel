@@ -1,9 +1,8 @@
 /*
- * Wald-Leiternspiel – alle Texte und Fragen.
+ * Wald-Leiternspiel: alle Texte und Fragen
  *
- * Diese Datei ist die einzige, die du ändern musst, wenn du Fragen ergänzen
- * oder Texte anpassen möchtest. Alle Fragen beziehen sich auf den Deutschen
- * Wald.
+ * Neue Fragen oder andere Texte nur hier ändern.
+ * Alle Fragen sind über den Deutschen Wald.
  *
  * So ist eine Frage (eine Karte) aufgebaut:
  *
@@ -18,12 +17,8 @@
  *     explanation: 'Ein bis zwei Sätze, warum das stimmt.',
  *   }
  *
- * Jede Punktzahl von 1 bis 6 sollte etwa gleich oft vorkommen (jetzt je 10-mal),
- * so wie die Seiten eines Würfels. Das Spiel mischt die Karten zu einem Stapel
- * und die Antworten bei jeder Frage neu, die richtige steht also nicht immer oben.
- *
- * (This is a classic script on purpose: no import/export, so the game runs
- * when index.html is opened straight from disk.)
+ * Jede Punktzahl von 1 bis 6 kommt gleich oft vor (je 10-mal), wie bei einem Würfel.
+ * Die Antworten werden im Spiel gemischt.
  */
 (function (global) {
   'use strict';
@@ -34,7 +29,7 @@
   const TOPIC_LABELS = { economy: 'Wirtschaft', society: 'Gesellschaft', environment: 'Umwelt' };
 
   const QUESTIONS = [
-    // ──────────────────────── Leicht: 1 oder 2 Punkte ────────────────────────
+    // Leicht: 1 oder 2 Punkte
     {
       id: 'e01',
       points: 2,
@@ -232,7 +227,7 @@
         'Scheitholz, Pellets und Hackschnitzel stammen aus dem Wald. Ohne Wald bräuchten diese Haushalte eine andere Heizung.',
     },
 
-    // ──────────────────────── Mittel: 3 oder 4 Punkte ────────────────────────
+    // Mittel: 3 oder 4 Punkte
     {
       id: 'm01',
       points: 4,
@@ -449,7 +444,7 @@
         'Wälder bremsen den Wind und halten Feuchtigkeit in der Landschaft. Ohne sie hätte auch die Landwirtschaft schlechtere Ernten.',
     },
 
-    // ──────────────────────── Schwer: 5 oder 6 Punkte ────────────────────────
+    // Schwer: 5 oder 6 Punkte
     {
       id: 'h01',
       points: 6,

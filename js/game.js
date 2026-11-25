@@ -1,10 +1,14 @@
 /**
  * Wald-Leiternspiel – the rules.
  *
- * Snakes and ladders where a question card replaces the dice: each turn the
- * player is offered one card per difficulty, each worth a number of steps.
- * A correct answer moves that far; a wrong one stays put. Ladders lift,
- * slides drop, first to the last field wins.
+ * A board game with question cards instead of dice, played like the printed
+ * version: one player draws a card from a shuffled pile and reads it out, the
+ * next player answers. A correct answer moves the answering player as many
+ * fields as the card has points; a wrong one leaves them where they are. Then
+ * the player who answered reads the next card to the player after them.
+ *
+ * There are only ladders. Landing on the bottom end of a ladder takes a player
+ * up to its top; landing on the top end takes them down to its bottom.
  *
  * Everything here is a pure function over a plain JSON state: no DOM, no
  * timers, no Math.random (the state carries its own seed). That keeps a game
@@ -17,54 +21,50 @@
 (function (global) {
   'use strict';
 
-  const LEVELS = ['easy', 'medium', 'hard'];
-
-  /** The steps a card of each difficulty can be worth: together, one die. */
-  const STEPS = { easy: [1, 2], medium: [3, 4], hard: [5, 6] };
-
+  const MIN_PLAYERS = 2;
   const MAX_PLAYERS = 4;
-  const STATE_VERSION = 1;
+  const MIN_POINTS = 1;
+  const MAX_POINTS = 6;
+  const STATE_VERSION = 2;
 
   /**
-   * Fields run 1..49 in a serpentine from the bottom-left corner, so field 49
-   * ends up top-right. Everyone starts on field 1.
+   * Fields run 1..36 in a serpentine from the bottom-left corner, so field 36
+   * ends up top-left. Everyone starts on field 1.
    *
-   *   43 44 45 46 47 48 49
-   *   42 41 40 39 38 37 36
-   *   29 30 31 32 33 34 35
-   *   28 27 26 25 24 23 22
-   *   15 16 17 18 19 20 21
-   *   14 13 12 11 10  9  8
-   *    1  2  3  4  5  6  7
+   *   36 35 34 33 32 31
+   *   25 26 27 28 29 30
+   *   24 23 22 21 20 19
+   *   13 14 15 16 17 18
+   *   12 11 10  9  8  7
+   *    1  2  3  4  5  6
    *
-   * Ladders and slides are placed so that none starts where another starts or
-   * ends (no chain reactions) and their gains and losses cancel out (68 each).
-   * The size was settled by simulation: with players who use the ladders about
-   * half the time, two players need around 20 questions and four around 32.
+   * Each ladder stands in one column, so it never crosses another field's
+   * number. No field belongs to two ladders, and no ladder touches the start
+   * or the goal, so a move never sets off a second ladder.
+   *
+   * Size and ladders were settled by simulation (see the tests): two players
+   * who answer three out of four questions correctly need about 18 questions
+   * in all, and four games out of five end after 11 to 30.
    */
   const BOARD = Object.freeze({
-    columns: 7,
-    rows: 7,
-    size: 49,
+    columns: 6,
+    rows: 6,
+    size: 36,
     ladders: Object.freeze([
-      Object.freeze({ from: 4, to: 17 }),
-      Object.freeze({ from: 9, to: 23 }),
-      Object.freeze({ from: 16, to: 30 }),
-      Object.freeze({ from: 26, to: 39 }),
-      Object.freeze({ from: 33, to: 47 }),
-    ]),
-    slides: Object.freeze([
-      Object.freeze({ from: 14, to: 2 }),
-      Object.freeze({ from: 24, to: 10 }),
-      Object.freeze({ from: 32, to: 18 }),
-      Object.freeze({ from: 35, to: 21 }),
-      Object.freeze({ from: 48, to: 34 }),
+      Object.freeze({ bottom: 3, top: 10 }),
+      Object.freeze({ bottom: 7, top: 18 }),
+      Object.freeze({ bottom: 9, top: 21 }),
+      Object.freeze({ bottom: 14, top: 23 }),
+      Object.freeze({ bottom: 20, top: 29 }),
+      Object.freeze({ bottom: 27, top: 34 }),
     ]),
   });
 
-  const SPECIALS = new Map();
-  for (const ladder of BOARD.ladders) SPECIALS.set(ladder.from, { kind: 'ladder', ...ladder });
-  for (const slide of BOARD.slides) SPECIALS.set(slide.from, { kind: 'slide', ...slide });
+  const LADDER_ENDS = new Map();
+  for (const ladder of BOARD.ladders) {
+    LADDER_ENDS.set(ladder.bottom, ladder);
+    LADDER_ENDS.set(ladder.top, ladder);
+  }
 
   /** Column and row of a field, both 0-based, with row 0 at the bottom. */
   function cellPosition(field) {
@@ -74,10 +74,21 @@
     return { column: row % 2 === 0 ? offset : BOARD.columns - 1 - offset, row };
   }
 
-  /** The ladder or slide that starts on a field, or null. */
-  function specialAt(field) {
-    const special = SPECIALS.get(field);
-    return special ? { ...special } : null;
+  /**
+   * The ladder that has an end on a field, and where it takes a player who
+   * lands there: up from the bottom end, down from the top end. Null if none.
+   */
+  function ladderAt(field) {
+    const ladder = LADDER_ENDS.get(field);
+    if (!ladder) return null;
+    const up = field === ladder.bottom;
+    return {
+      bottom: ladder.bottom,
+      top: ladder.top,
+      direction: up ? 'up' : 'down',
+      from: field,
+      to: up ? ladder.top : ladder.bottom,
+    };
   }
 
   // ── Randomness ────────────────────────────────────────────────────────────
@@ -114,24 +125,35 @@
     }
   }
 
-  function dealOffer(state) {
-    state.offer = {};
-    for (const level of LEVELS) {
-      state.offer[level] = STEPS[level][randomInt(state, STEPS[level].length)];
+  /** The player who answers the card that the reader reads out: the next one. */
+  function answererOf(state) {
+    return (state.reader + 1) % state.players.length;
+  }
+
+  /** Shuffle every card into a new pile. The top card is the last one. */
+  function freshPile(state) {
+    const pile = shuffled(state, state.cards);
+    // After a reshuffle, don't let the card the players have just seen come
+    // straight back up.
+    if (pile.length > 1 && pile[pile.length - 1] === state.lastDrawn) {
+      [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]];
     }
+    return pile;
   }
 
   /**
    * Start a game.
    *
-   * @param {string[]} names      One to four player names; blanks get a default.
+   * @param {string[]} names  Two to four player names in seating order: the
+   *                          youngest first, then each player to the left of
+   *                          the one before. Blanks get a default.
    * @param {object}   options
    * @param {Array}    options.questions  The question list from content.js.
    * @param {number}   [options.seed]     Fixes the shuffle; defaults to the clock.
    */
   function createGame(names, { questions, seed = Date.now() } = {}) {
-    if (!Array.isArray(names) || names.length < 1 || names.length > MAX_PLAYERS) {
-      throw new Error(`A game needs 1 to ${MAX_PLAYERS} players.`);
+    if (!Array.isArray(names) || names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) {
+      throw new Error(`A game needs ${MIN_PLAYERS} to ${MAX_PLAYERS} players.`);
     }
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('A game needs questions.');
@@ -139,23 +161,25 @@
 
     const state = {
       version: STATE_VERSION,
-      phase: 'choose',
+      phase: 'draw',
       seed: seed | 0,
       players: names.map((name, index) => ({
-        name: String(name ?? '').trim().slice(0, 20) || `Team ${index + 1}`,
+        name: String(name ?? '').trim().slice(0, 20) || `Spieler ${index + 1}`,
         field: 1,
         correct: 0,
         wrong: 0,
       })),
-      current: 0,
-      round: 1,
-      // Every question id per level, and how many answers each one has. The
-      // state keeps these so that refilling a pile needs nothing from outside.
-      pool: { easy: [], medium: [], hard: [] },
+      // The youngest player reads the first card.
+      reader: 0,
+      // How many cards have been drawn in this game.
+      asked: 0,
+      // Every card in the game, with its points and how many answers it has.
+      // The state keeps these so that reshuffling needs nothing from outside.
+      cards: [],
+      points: {},
       answerCounts: {},
-      piles: { easy: [], medium: [], hard: [] },
-      lastDrawn: { easy: null, medium: null, hard: null },
-      offer: null,
+      pile: [],
+      lastDrawn: null,
       question: null,
       answer: null,
       move: null,
@@ -163,95 +187,77 @@
     };
 
     for (const question of questions) {
-      if (!state.pool[question.level]) continue;
-      state.pool[question.level].push(question.id);
+      if (!Number.isInteger(question.points) || question.points < MIN_POINTS || question.points > MAX_POINTS) {
+        throw new Error(`Question "${question.id}" needs ${MIN_POINTS} to ${MAX_POINTS} points.`);
+      }
+      state.cards.push(question.id);
+      state.points[question.id] = question.points;
       state.answerCounts[question.id] = question.answers.length;
     }
-    for (const level of LEVELS) {
-      if (state.pool[level].length === 0) throw new Error(`No "${level}" questions.`);
-    }
 
-    dealOffer(state);
+    state.pile = freshPile(state);
     return state;
   }
 
-  /** The same players, a fresh board and a fresh shuffle. */
-  function rematch(state, { questions, seed = Date.now() } = {}) {
-    return createGame(state.players.map((player) => player.name), { questions, seed });
-  }
-
-  /** Take the top card of a pile, reshuffling the whole level when it runs out. */
-  function drawQuestion(state, level) {
-    if (state.piles[level].length === 0) {
-      const pile = shuffled(state, state.pool[level]);
-      // The card that is drawn next sits at the end. After a reshuffle, don't
-      // let it be the one the players have just seen.
-      if (pile.length > 1 && pile[pile.length - 1] === state.lastDrawn[level]) {
-        [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]];
-      }
-      state.piles[level] = pile;
-    }
-    const id = state.piles[level].pop();
-    state.lastDrawn[level] = id;
-    return id;
-  }
-
   /**
-   * Where each of the three offered cards would take the current player.
-   * @returns {Array<{level, steps, target, reachesGoal, special}>}
+   * The same players back on the start field. The pile carries on where it
+   * was, so the next game does not repeat cards until all have been seen.
    */
-  function previewOffer(state) {
-    if (state.phase !== 'choose') return [];
-    const from = state.players[state.current].field;
-    return LEVELS.map((level) => {
-      const steps = state.offer[level];
-      const target = Math.min(BOARD.size, from + steps);
-      return {
-        level,
-        steps,
-        target,
-        reachesGoal: target === BOARD.size,
-        special: specialAt(target),
-      };
+  function rematch(previous) {
+    const state = clone(previous);
+    for (const player of state.players) Object.assign(player, { field: 1, correct: 0, wrong: 0 });
+    Object.assign(state, {
+      phase: 'draw',
+      reader: 0,
+      asked: 0,
+      question: null,
+      answer: null,
+      move: null,
+      winner: null,
     });
+    return state;
   }
 
-  /** The current player picks a difficulty and gets a question. */
-  function chooseCard(previous, level) {
-    expectPhase(previous, 'choose', 'Choosing a card');
-    if (!LEVELS.includes(level)) throw new Error(`Unknown level "${level}".`);
+  /** The reader draws the top card of the pile; the pile is reshuffled when empty. */
+  function drawCard(previous) {
+    expectPhase(previous, 'draw', 'Drawing a card');
 
     const state = clone(previous);
-    const id = drawQuestion(state, level);
+    if (state.pile.length === 0) state.pile = freshPile(state);
+    const id = state.pile.pop();
+    state.lastDrawn = id;
+    state.asked += 1;
+
     const order = shuffled(state, Array.from({ length: state.answerCounts[id] }, (_, i) => i));
     // `order[i]` is the index, in the question's own answer list, of the
     // answer shown in position i. Answer 0 is always the correct one.
-    state.question = { id, level, steps: state.offer[level], order };
+    state.question = { id, points: state.points[id], order };
     state.phase = 'question';
     return state;
   }
 
-  /** The current player picks the answer shown at `shownIndex`. */
+  /** The answering player gives the answer shown at `shownIndex`. */
   function answer(previous, shownIndex) {
     expectPhase(previous, 'question', 'Answering');
-    const { order, steps } = previous.question;
+    const { order, points } = previous.question;
     if (!Number.isInteger(shownIndex) || shownIndex < 0 || shownIndex >= order.length) {
       throw new Error(`There is no answer ${shownIndex}.`);
     }
 
     const state = clone(previous);
-    const player = state.players[state.current];
+    const index = answererOf(state);
+    const player = state.players[index];
     const correct = order[shownIndex] === 0;
     state.answer = { chosen: shownIndex, correct };
 
     if (correct) {
       player.correct += 1;
-      const landing = Math.min(BOARD.size, player.field + steps);
+      const landing = Math.min(BOARD.size, player.field + points);
       state.move = {
-        player: state.current,
+        player: index,
         from: player.field,
         landing,
-        special: landing < BOARD.size ? specialAt(landing) : null,
+        ladder: landing < BOARD.size ? ladderAt(landing) : null,
       };
     } else {
       player.wrong += 1;
@@ -262,50 +268,49 @@
     return state;
   }
 
+  /** The player who has just answered reads the next card. */
   function endTurn(state) {
-    state.current = (state.current + 1) % state.players.length;
-    if (state.current === 0) state.round += 1;
+    state.reader = answererOf(state);
     state.question = null;
     state.answer = null;
     state.move = null;
-    dealOffer(state);
-    state.phase = 'choose';
+    state.phase = 'draw';
   }
 
   function finish(state) {
-    state.winner = state.current;
+    state.winner = state.move.player;
     state.phase = 'over';
   }
 
   /**
    * Carry the game forward after the answer has been revealed, and again after
-   * a ladder or slide has been announced.
+   * a ladder has been announced.
    *
-   *   reveal ─ wrong ──────────────────────────→ next player
-   *   reveal ─ right ─ plain field ────────────→ next player
-   *                  ─ last field ─────────────→ over
-   *                  ─ ladder/slide → event ───→ next player
+   *   reveal ─ wrong ──────────────────────────→ next reader
+   *   reveal ─ right ─ plain field ────────────→ next reader
+   *                  ─ goal ───────────────────→ over
+   *                  ─ ladder end → event ─────→ next reader
    */
   function advance(previous) {
     const state = clone(previous);
-    const player = state.players[state.current];
 
     if (state.phase === 'reveal') {
       if (!state.answer.correct) {
         endTurn(state);
       } else {
+        const player = state.players[state.move.player];
         player.field = state.move.landing;
         if (player.field >= BOARD.size) finish(state);
-        else if (state.move.special) state.phase = 'event';
+        else if (state.move.ladder) state.phase = 'event';
         else endTurn(state);
       }
       return state;
     }
 
     if (state.phase === 'event') {
-      player.field = state.move.special.to;
-      if (player.field >= BOARD.size) finish(state);
-      else endTurn(state);
+      // One ladder per move: the other end of this ladder does not count.
+      state.players[state.move.player].field = state.move.ladder.to;
+      endTurn(state);
       return state;
     }
 
@@ -315,12 +320,11 @@
   /** Whether a value read back from storage looks like a game this code can run. */
   function isValidState(state) {
     if (!state || typeof state !== 'object' || state.version !== STATE_VERSION) return false;
-    if (!['choose', 'question', 'reveal', 'event', 'over'].includes(state.phase)) return false;
-    if (!Array.isArray(state.players) || state.players.length < 1 || state.players.length > MAX_PLAYERS) {
-      return false;
-    }
-    if (!Number.isInteger(state.current) || !state.players[state.current]) return false;
-    const fieldsOk = state.players.every(
+    if (!['draw', 'question', 'reveal', 'event', 'over'].includes(state.phase)) return false;
+    const { players } = state;
+    if (!Array.isArray(players) || players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) return false;
+    if (!Number.isInteger(state.reader) || !players[state.reader]) return false;
+    const fieldsOk = players.every(
       (player) =>
         player &&
         typeof player.name === 'string' &&
@@ -329,26 +333,29 @@
         player.field <= BOARD.size,
     );
     if (!fieldsOk) return false;
-    if (!state.pool || !state.piles || !state.answerCounts) return false;
-    if (state.phase === 'choose' && !state.offer) return false;
+    if (!Array.isArray(state.cards) || state.cards.length === 0 || !Array.isArray(state.pile)) return false;
+    if (!state.points || !state.answerCounts) return false;
+    if (!state.pile.every((id) => state.cards.includes(id))) return false;
     if ((state.phase === 'question' || state.phase === 'reveal') && !state.question) return false;
     if (state.phase === 'reveal' && !state.answer) return false;
-    if (state.phase === 'event' && !(state.move && state.move.special)) return false;
+    if (state.phase === 'event' && !(state.move && state.move.ladder)) return false;
+    if (state.phase === 'over' && !players[state.winner]) return false;
     return true;
   }
 
   const namespace = (global.WaldLeiternspiel = global.WaldLeiternspiel || {});
   namespace.game = {
     BOARD,
-    LEVELS,
-    STEPS,
+    MIN_PLAYERS,
     MAX_PLAYERS,
+    MIN_POINTS,
+    MAX_POINTS,
     cellPosition,
-    specialAt,
+    ladderAt,
+    answererOf,
     createGame,
     rematch,
-    previewOffer,
-    chooseCard,
+    drawCard,
     answer,
     advance,
     isValidState,

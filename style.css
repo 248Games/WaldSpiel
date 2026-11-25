@@ -1,8 +1,8 @@
 /*
  * Wald-Leiternspiel
  *
- * Layout: links das Brett als quadratische Forstkarte, rechts das Pult mit den
- * Fragekarten und dem Spielstand. Auf dem Handy liegt das Pult unter dem Brett.
+ * Layout: links das Brett als quadratische Forstkarte, rechts das Pult mit dem
+ * Kartenstapel und dem Spielstand. Auf dem Handy liegt das Pult unter dem Brett.
  */
 
 @font-face {
@@ -50,14 +50,11 @@
   --wald-b: #a7c78f;
   --wald-zeichen: #3d6a3a;
   --feld-tinte: #1c3823;
-  --lichtung: #e7eea6;       /* Feld am Fuß einer Leiter */
-  --kahl: #e7cba0;           /* Feld am Anfang einer Rutsche */
+  --lichtung: #e7eea6;       /* unteres Ende einer Leiter: junger Wald */
+  --kahl: #e7cba0;           /* oberes Ende einer Leiter: kahler Boden */
 
   --holz: #c08033;
   --holz-kante: #54310d;
-  --erde: #c5532a;
-  --erde-kante: #67260f;
-  --erde-licht: #f6cdb3;
 
   --richtig: #1b7340;
   --richtig-flaeche: #dcefdd;
@@ -107,9 +104,6 @@
     --kahl: #6f5536;
     --holz: #e0aa60;
     --holz-kante: #2a1806;
-    --erde: #e37443;
-    --erde-kante: #37150a;
-    --erde-licht: #fbd9c4;
     --richtig: #86d79d;
     --richtig-flaeche: #1c3a27;
     --falsch: #f49b93;
@@ -140,9 +134,6 @@
   --kahl: #6f5536;
   --holz: #e0aa60;
   --holz-kante: #2a1806;
-  --erde: #e37443;
-  --erde-kante: #37150a;
-  --erde-licht: #fbd9c4;
   --richtig: #86d79d;
   --richtig-flaeche: #1c3a27;
   --falsch: #f49b93;
@@ -364,6 +355,7 @@ input {
 
 .pult__teil {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   padding: 18px;
   background: var(--flaeche);
@@ -405,11 +397,11 @@ input {
   fill: var(--wald-b);
 }
 
-.feld--leiter {
+.feld--unten {
   fill: var(--lichtung);
 }
 
-.feld--rutsche {
+.feld--oben {
   fill: var(--kahl);
 }
 
@@ -450,11 +442,13 @@ input {
   fill: var(--auf-signal);
 }
 
+/* Pfeil unter der Feldnummer: hinauf am unteren, hinunter am oberen Ende */
+.feld__pfeil {
+  fill: var(--feld-tinte);
+}
+
 .leiter__kante,
-.leiter__holz,
-.rutsche__kante,
-.rutsche__erde,
-.rutsche__pfeil {
+.leiter__holz {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -468,55 +462,6 @@ input {
 .leiter__holz {
   stroke: var(--holz);
   stroke-width: 6;
-}
-
-.rutsche__kante {
-  stroke: var(--erde-kante);
-  stroke-width: 27;
-}
-
-.rutsche__erde {
-  stroke: var(--erde);
-  stroke-width: 21;
-}
-
-.rutsche__pfeil {
-  stroke: var(--erde-licht);
-  stroke-width: 3.5;
-}
-
-/* Wohin die drei Karten führen */
-.ziel-marke__rand {
-  fill: none;
-  stroke: var(--signal);
-  stroke-width: 4;
-  stroke-dasharray: 9 7;
-  stroke-linecap: round;
-  transition: stroke-width 120ms;
-}
-
-.ziel-marke__schild {
-  fill: var(--signal);
-}
-
-.ziel-marke__text {
-  font-family: var(--schrift-titel);
-  font-size: 17px;
-  fill: var(--auf-signal);
-  text-anchor: middle;
-}
-
-.ziel-marke {
-  transition: opacity 120ms;
-}
-
-.hat-auswahl .ziel-marke:not(.ist-aktiv) {
-  opacity: 0.3;
-}
-
-.ziel-marke.ist-aktiv .ziel-marke__rand {
-  stroke-width: 7;
-  stroke-dasharray: none;
 }
 
 /* Spielsteine: Wegzeichen */
@@ -579,12 +524,19 @@ input {
   flex: none;
 }
 
+.legende__eintrag--ganz {
+  flex-basis: 100%;
+}
+
 .legende__bild .leiter__kante { stroke-width: 5; }
 .legende__bild .leiter__holz { stroke-width: 2.6; }
-.legende__bild .rutsche__kante { stroke-width: 8; }
-.legende__bild .rutsche__erde { stroke-width: 5.5; }
 
-/* ── Pult: Teams wählen ──────────────────────────────────────────────────── */
+.legende__feld {
+  stroke: var(--linie);
+  stroke-width: 1.5;
+}
+
+/* ── Pult: Spieler eintragen ─────────────────────────────────────────────── */
 
 .anzahl {
   display: grid;
@@ -600,7 +552,7 @@ input {
 
 .anzahl__wahl {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -641,13 +593,14 @@ input {
 
 .namen__zeile {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   font-size: var(--t-gross);
 }
 
 .namen__zeile input {
-  flex: 1;
+  flex: 1 1 8rem;
   min-width: 0;
   padding: 9px 12px;
   border: 1.5px solid var(--linie);
@@ -659,6 +612,22 @@ input {
 .namen__zeile input::placeholder {
   color: var(--tinte-leise);
   opacity: 1;
+}
+
+.namen__hinweis {
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+}
+
+.namen__marke {
+  flex: none;
+  max-width: 7.5rem;
+  padding: 3px 9px;
+  border: 1.5px solid var(--signal);
+  border-radius: 10px;
+  font-size: var(--t-klein);
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .kurzregeln {
@@ -702,12 +671,26 @@ input {
 
 /* ── Pult: Zug ───────────────────────────────────────────────────────────── */
 
-.zug__wer {
+/* "Ada liest vor, Ben antwortet" */
+.rollen {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.rolle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.rollen--klein {
+  font-size: var(--t-leise);
+  font-weight: 700;
 }
 
 .zug__hinweis {
@@ -715,126 +698,69 @@ input {
   font-size: var(--t-leise);
 }
 
-.karten {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.karte {
+/* Der verdeckte Kartenstapel */
+.stapel {
   appearance: none;
   display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: 4px;
-  min-width: 0;
-  padding: 12px 10px 12px 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 12px 16px 12px 12px;
   border: 1.5px solid var(--linie);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--flaeche-tief);
   text-align: left;
   cursor: pointer;
   transition: transform 140ms, border-color 140ms, box-shadow 140ms;
 }
 
-.karte:hover:not(:disabled),
-.karte:focus-visible {
+.stapel:hover:not(:disabled),
+.stapel:focus-visible {
   border-color: var(--signal);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 0 -2px var(--signal);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 -2px var(--signal);
 }
 
-.karte:disabled {
+.stapel:disabled {
   opacity: 0.55;
   cursor: default;
 }
 
-.karte__stufe {
-  display: grid;
-  gap: 4px;
-  font-size: var(--t-klein);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--tinte-leise);
+.stapel__bild {
+  width: 3.75rem;
+  height: 4.75rem;
 }
 
-.karte__tannen {
-  width: 44px;
-  height: 14px;
-}
-
-.karte__tanne {
-  fill: none;
-  stroke: var(--tinte-leise);
-  stroke-width: 1.4;
-  stroke-linejoin: round;
-}
-
-.karte__tanne--voll {
+.stapel__karte {
   fill: var(--gruen);
-  stroke: var(--gruen);
+  stroke: var(--flaeche);
+  stroke-width: 2.5;
 }
 
-.karte__wert {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0 6px;
-  line-height: 1;
+.stapel__karte--hinten {
+  opacity: 0.55;
 }
 
-.karte__zahl {
+.stapel__tanne {
+  fill: var(--auf-gruen);
+  opacity: 0.9;
+}
+
+.stapel__text {
+  display: grid;
+  gap: 2px;
+}
+
+.stapel__titel {
   font-family: var(--schrift-titel);
-  font-size: 2.75rem;
-  color: var(--gruen);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--t-gross);
+  line-height: 1.2;
 }
 
-.karte__einheit {
-  font-size: var(--t-leise);
-  font-weight: 700;
-}
-
-.karte__ziel {
+.stapel__anzahl {
   font-size: var(--t-leise);
   color: var(--tinte-leise);
-}
-
-.karte__sonder {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 2px;
-  padding: 2px 9px 2px 7px;
-  border: 1.5px solid;
-  border-radius: 999px;
-  font-size: var(--t-klein);
-  font-weight: 700;
-  line-height: 1.3;
-  white-space: nowrap;
-}
-
-.karte__sonder svg {
-  width: 0.6rem;
-  height: 0.6rem;
-  flex: none;
-}
-
-.karte__sonder--ladder {
-  border-color: var(--holz);
-}
-
-.karte__sonder--ladder path {
-  fill: var(--holz);
-}
-
-.karte__sonder--slide {
-  border-color: var(--erde);
-}
-
-.karte__sonder--slide path {
-  fill: var(--erde);
 }
 
 .zug__knoepfe,
@@ -876,8 +802,28 @@ input {
 }
 
 .stand__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.stand__rolle {
+  padding: 1px 8px;
+  border: 1.5px solid var(--linie);
+  border-radius: 999px;
+  font-size: var(--t-klein);
+  font-weight: 700;
+  color: var(--tinte-leise);
+  white-space: nowrap;
+}
+
+.stand__rolle--antwortet {
+  border-color: var(--signal);
+  color: var(--tinte);
 }
 
 .stand__feld {
@@ -920,6 +866,10 @@ input {
   width: min(46rem, calc(100% - 24px));
 }
 
+.dlg [tabindex="-1"]:focus {
+  outline: none;
+}
+
 .dlg__titel {
   font-family: var(--schrift-titel);
   font-weight: 400;
@@ -932,13 +882,49 @@ input {
   font-size: var(--t-text);
 }
 
-/* Frage */
-.frage__kopf {
+/* Frage: die gezogene Karte */
+.frage__hinweis {
+  font-size: var(--t-leise);
+  color: var(--tinte-leise);
+}
+
+.karte {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--linie);
+  border-radius: 16px;
+  background: var(--flaeche-tief);
+}
+
+.karte__kopf {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 6px 12px;
+}
+
+.karte__punkte {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 12px 4px;
+  border-radius: 12px;
+  background: var(--gruen);
+  color: var(--auf-gruen);
+  line-height: 1;
+}
+
+.karte__zahl {
+  font-family: var(--schrift-titel);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.karte__einheit {
   font-size: var(--t-leise);
+  font-weight: 700;
 }
 
 .chip {
@@ -950,21 +936,6 @@ input {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.frage__wert {
-  color: var(--tinte-leise);
-  font-weight: 700;
-}
-
-.frage__wer {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  font-weight: 700;
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .frage__text {
@@ -990,7 +961,7 @@ input {
   padding: 11px 14px 11px 11px;
   border: 1.5px solid var(--linie);
   border-radius: 14px;
-  background: var(--flaeche-tief);
+  background: var(--flaeche);
   text-align: left;
   cursor: pointer;
   transition: border-color 120ms, transform 120ms;
@@ -1012,7 +983,7 @@ input {
   width: 2.1rem;
   height: 2.1rem;
   border-radius: 9px;
-  background: var(--flaeche);
+  background: var(--flaeche-tief);
   border: 1.5px solid var(--linie);
   font-family: var(--schrift-titel);
   font-size: var(--t-text);
@@ -1078,19 +1049,27 @@ input {
   margin-top: 6px;
 }
 
-/* Ereignis: Leiter oder Rutsche */
+/* Ereignis: Leiter hinauf oder hinunter */
 .ereignis__bild {
   width: 7.5rem;
   height: 5.25rem;
   border-radius: 12px;
 }
 
-.ereignis__grund--ladder {
+.ereignis__grund--up {
   fill: var(--lichtung);
 }
 
-.ereignis__grund--slide {
+.ereignis__grund--down {
   fill: var(--kahl);
+}
+
+.ereignis__pfeil {
+  fill: none;
+  stroke: var(--feld-tinte);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Fazit */
@@ -1190,11 +1169,7 @@ input {
   }
 
   .karte {
-    padding: 10px 8px 10px 10px;
-  }
-
-  .karte__zahl {
-    font-size: 2.25rem;
+    padding: 12px;
   }
 
   .dlg {

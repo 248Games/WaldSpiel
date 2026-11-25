@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wald-Leiternspiel</title>
-  <meta name="description" content="Ein Leiternspiel mit Fragen statt Würfel: Was würde mit Wirtschaft und Gesellschaft passieren, wenn es in Deutschland keinen Wald mehr gäbe?">
+  <meta name="description" content="Ein Leiternspiel mit Fragekarten statt Würfel über den Deutschen Wald: Was würde mit Wirtschaft und Gesellschaft passieren, wenn es in Deutschland keinen Wald mehr gäbe?">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,21 +26,28 @@
 
     <main class="tisch">
       <figure class="brett-rahmen">
-        <svg id="board" class="brett" viewBox="0 0 700 700" role="img"></svg>
+        <svg id="board" class="brett" viewBox="0 0 600 600" role="img"></svg>
         <figcaption class="legende">
-          <span class="legende__eintrag">
+          <span class="legende__eintrag legende__eintrag--ganz">
             <svg class="legende__bild" viewBox="0 0 28 28" aria-hidden="true">
-              <path class="leiter__kante" d="M9 3V25M19 3V25M9 8H19M9 14H19M9 20H19"/>
-              <path class="leiter__holz" d="M9 3V25M19 3V25M9 8H19M9 14H19M9 20H19"/>
+              <path class="leiter__kante" d="M8 25 11 3M18 25 21 3M8.7 20H18.7M9.4 14H19.4M10.2 8H20.2"/>
+              <path class="leiter__holz" d="M8 25 11 3M18 25 21 3M8.7 20H18.7M9.4 14H19.4M10.2 8H20.2"/>
             </svg>
-            Leiter: Das gibt uns der Wald.
+            Leiter: am unteren Ende hinauf, am oberen Ende hinunter.
           </span>
           <span class="legende__eintrag">
             <svg class="legende__bild" viewBox="0 0 28 28" aria-hidden="true">
-              <path class="rutsche__kante" d="M8 5Q20 12 20 23"/>
-              <path class="rutsche__erde" d="M8 5Q20 12 20 23"/>
+              <rect class="legende__feld feld--unten" x="1.5" y="1.5" width="25" height="25" rx="6"/>
+              <path class="feld__pfeil" d="M14 7.5l8 13H6z"/>
             </svg>
-            Rutsche: Das passiert ohne Wald.
+            Unten: Das gibt uns der Wald.
+          </span>
+          <span class="legende__eintrag">
+            <svg class="legende__bild" viewBox="0 0 28 28" aria-hidden="true">
+              <rect class="legende__feld feld--oben" x="1.5" y="1.5" width="25" height="25" rx="6"/>
+              <path class="feld__pfeil" d="M6 7.5h16l-8 13z"/>
+            </svg>
+            Oben: Das passiert ohne Wald.
           </span>
         </figcaption>
       </figure>
@@ -50,31 +57,32 @@
           <h2 id="setup-title">Wer spielt mit?</h2>
 
           <fieldset class="anzahl">
-            <legend>Spieler oder Teams</legend>
+            <legend>Wie viele spielen mit?</legend>
             <div class="anzahl__wahl">
-              <input type="radio" name="count" id="count-1" value="1"><label for="count-1">1</label>
               <input type="radio" name="count" id="count-2" value="2" checked><label for="count-2">2</label>
               <input type="radio" name="count" id="count-3" value="3"><label for="count-3">3</label>
               <input type="radio" name="count" id="count-4" value="4"><label for="count-4">4</label>
             </div>
           </fieldset>
 
-          <div class="namen" id="names">
+          <p class="namen__hinweis" id="names-hint">Tragt euch der Reihe nach ein: oben der jüngste Spieler, darunter immer der Spieler links daneben.</p>
+          <div class="namen" id="names" role="group" aria-describedby="names-hint">
             <div class="namen__zeile" data-player="0">
-              <label class="sr-only" for="name-0">Name mit Wegzeichen Punkt</label>
-              <input type="text" id="name-0" maxlength="20" placeholder="Team 1" autocomplete="off">
+              <label class="sr-only" for="name-0">Jüngster Spieler, Wegzeichen Punkt</label>
+              <input type="text" id="name-0" maxlength="20" placeholder="Spieler 1" autocomplete="off">
+              <span class="namen__marke">jüngster, liest zuerst vor</span>
             </div>
             <div class="namen__zeile" data-player="1">
-              <label class="sr-only" for="name-1">Name mit Wegzeichen Kreuz</label>
-              <input type="text" id="name-1" maxlength="20" placeholder="Team 2" autocomplete="off">
+              <label class="sr-only" for="name-1">Spieler 2, Wegzeichen Kreuz</label>
+              <input type="text" id="name-1" maxlength="20" placeholder="Spieler 2" autocomplete="off">
             </div>
             <div class="namen__zeile" data-player="2">
-              <label class="sr-only" for="name-2">Name mit Wegzeichen Raute</label>
-              <input type="text" id="name-2" maxlength="20" placeholder="Team 3" autocomplete="off">
+              <label class="sr-only" for="name-2">Spieler 3, Wegzeichen Raute</label>
+              <input type="text" id="name-2" maxlength="20" placeholder="Spieler 3" autocomplete="off">
             </div>
             <div class="namen__zeile" data-player="3">
-              <label class="sr-only" for="name-3">Name mit Wegzeichen Dreieck</label>
-              <input type="text" id="name-3" maxlength="20" placeholder="Team 4" autocomplete="off">
+              <label class="sr-only" for="name-3">Spieler 4, Wegzeichen Dreieck</label>
+              <input type="text" id="name-3" maxlength="20" placeholder="Spieler 4" autocomplete="off">
             </div>
           </div>
 
@@ -83,20 +91,32 @@
           <div class="kurzregeln">
             <h3>So geht’s</h3>
             <ul>
-              <li>Statt zu würfeln wählst du eine Fragekarte: leicht, mittel oder schwer.</li>
-              <li>Stimmt deine Antwort, rückst du so viele Felder vor, wie auf der Karte steht. Sonst bleibst du stehen.</li>
-              <li>Leitern bringen dich nach oben, Rutschen zurück. Wer zuerst Feld 49 erreicht, gewinnt.</li>
+              <li>Alle Fragen drehen sich ausschließlich um den Deutschen Wald.</li>
+              <li>Der jüngste Spieler zieht eine Karte und liest Frage, Antworten und Punktzahl vor. Der Spieler links von ihm antwortet.</li>
+              <li>Richtig: so viele Felder vor, wie Punkte auf der Karte stehen. Falsch: stehen bleiben.</li>
+              <li>Danach liest der vor, der gerade geantwortet hat, und der Nächste antwortet.</li>
+              <li>Leitern: am unteren Ende hinauf, am oberen Ende hinunter. Wer zuerst das Ziel auf Feld <span data-goal>36</span> erreicht, gewinnt.</li>
             </ul>
           </div>
         </section>
 
-        <section id="turn" class="pult__teil" aria-labelledby="turn-who" hidden>
-          <h2 class="zug__wer" id="turn-who"></h2>
+        <section id="turn" class="pult__teil" aria-labelledby="turn-title" hidden>
+          <h2 class="rollen" id="turn-title"></h2>
           <p class="zug__hinweis" id="turn-hint"></p>
-          <div class="karten" id="cards"></div>
+          <button type="button" class="stapel" id="btn-draw">
+            <svg class="stapel__bild" viewBox="0 0 60 76" aria-hidden="true">
+              <rect class="stapel__karte stapel__karte--hinten" x="8" y="1.5" width="50" height="66" rx="8"/>
+              <rect class="stapel__karte" x="2" y="8.5" width="50" height="66" rx="8"/>
+              <path class="stapel__tanne" d="M27 21 37 36h-5l7 11H15l7-11h-5zM25 47h4v8h-4z"/>
+            </svg>
+            <span class="stapel__text">
+              <span class="stapel__titel">Karte ziehen</span>
+              <span class="stapel__anzahl" id="deck-count"></span>
+            </span>
+          </button>
           <div class="zug__knoepfe" id="over-actions" hidden>
             <button type="button" class="knopf knopf--haupt" id="btn-show-result">Ergebnis ansehen</button>
-            <button type="button" class="knopf" id="btn-rematch-panel">Noch eine Runde</button>
+            <button type="button" class="knopf" id="btn-rematch-panel">Noch ein Spiel</button>
           </div>
           <p class="meldung" id="status" role="status"></p>
         </section>
@@ -109,14 +129,17 @@
     </main>
   </div>
 
-  <dialog id="dlg-question" class="dlg" aria-labelledby="question-text">
-    <div class="frage__kopf">
-      <span class="chip" id="question-topic"></span>
-      <span class="frage__wert" id="question-worth"></span>
-      <span class="frage__wer" id="question-who"></span>
+  <dialog id="dlg-question" class="dlg" aria-labelledby="question-text" aria-describedby="question-hint">
+    <p class="rollen rollen--klein" id="question-roles"></p>
+    <p class="frage__hinweis" id="question-hint"></p>
+    <div class="karte">
+      <div class="karte__kopf">
+        <span class="chip" id="question-topic"></span>
+        <span class="karte__punkte" id="question-points"></span>
+      </div>
+      <h2 class="frage__text" id="question-text" tabindex="-1" autofocus></h2>
+      <div class="antworten" id="answers"></div>
     </div>
-    <h2 class="frage__text" id="question-text" tabindex="-1" autofocus></h2>
-    <div class="antworten" id="answers"></div>
     <div class="aufloesung" id="reveal" hidden>
       <p class="aufloesung__urteil" id="reveal-verdict"></p>
       <p class="aufloesung__text" id="reveal-text"></p>
@@ -137,8 +160,8 @@
     <h2 class="dlg__titel" id="over-title"></h2>
     <ol class="stand" id="over-standings"></ol>
     <div class="dlg__knoepfe">
-      <button type="button" class="knopf knopf--haupt" id="btn-rematch">Noch eine Runde</button>
-      <button type="button" class="knopf" id="btn-new-teams">Neue Teams</button>
+      <button type="button" class="knopf knopf--haupt" id="btn-rematch">Noch ein Spiel</button>
+      <button type="button" class="knopf" id="btn-new-players">Neue Spieler</button>
       <button type="button" class="knopf" data-close>Brett ansehen</button>
     </div>
     <section class="fazit" aria-labelledby="over-conclusion-title">
@@ -151,7 +174,7 @@
   <dialog id="dlg-conclusion" class="dlg dlg--breit" aria-labelledby="conclusion-title">
     <section class="fazit">
       <p class="etikett">Antwort auf die Forschungsfrage</p>
-      <h2 class="fazit__frage" id="conclusion-title"></h2>
+      <h2 class="fazit__frage" id="conclusion-title" tabindex="-1" autofocus></h2>
       <div class="fazit__inhalt" data-conclusion></div>
     </section>
     <div class="dlg__knoepfe">
@@ -160,14 +183,29 @@
   </dialog>
 
   <dialog id="dlg-rules" class="dlg dlg--breit" aria-labelledby="rules-title">
-    <h2 class="dlg__titel" id="rules-title">Regeln</h2>
+    <h2 class="dlg__titel" id="rules-title" tabindex="-1" autofocus>Regeln</h2>
+    <p>Dieses Spiel bezieht sich ausschließlich auf den Deutschen Wald. Es spielen 2 bis 4 Spieler an einem Gerät.</p>
+    <h3>Vorbereitung</h3>
     <ul class="regeln">
-      <li>Alle starten auf Feld 1. Wer zuerst Feld 49 erreicht, gewinnt.</li>
-      <li>Statt zu würfeln wählst du eine Fragekarte: leicht, mittel oder schwer. Auf jeder Karte steht, wie viele Felder sie wert ist.</li>
-      <li>Stimmt deine Antwort, rückst du so viele Felder vor. Ist sie falsch, bleibst du stehen.</li>
-      <li>Landest du am Fuß einer Leiter, kletterst du hoch. Landest du am Anfang einer Rutsche, rutschst du zurück.</li>
-      <li>Leitern zeigen, was der Wald uns gibt. Rutschen zeigen, was ohne Wald passieren würde.</li>
-      <li>Ihr könnt allein, zu zweit oder in bis zu vier Teams spielen.</li>
+      <li>Jeder Spieler bekommt eine Spielfigur. Alle starten auf Feld 1.</li>
+      <li>Die Fragekarten liegen gemischt und verdeckt als Stapel bereit. Auf jeder Karte stehen eine Frage, die Antworten und eine Punktzahl von 1 bis 6.</li>
+    </ul>
+    <h3>Spielablauf</h3>
+    <ul class="regeln">
+      <li>Der jüngste Spieler beginnt. Er zieht eine Karte und liest Frage, Antworten und Punktzahl laut vor.</li>
+      <li>Der Spieler links von ihm muss die Frage beantworten. Tippt seine Antwort an.</li>
+      <li>Richtige Antwort: Er darf so viele Felder vorrücken, wie Punkte auf der Karte stehen. Falsche Antwort: Er muss stehen bleiben.</li>
+      <li>Danach ist der nächste Spieler mit dem Vorlesen dran: Wer gerade geantwortet hat, liest die nächste Karte dem Spieler links von sich vor.</li>
+      <li>Ist der Stapel durchgespielt, wird er neu gemischt.</li>
+    </ul>
+    <h3>Besonderheit: Leitern</h3>
+    <ul class="regeln">
+      <li>Landet ein Spieler am unteren Ende einer Leiter, steigt er hinauf. Das zeigt, was uns der Wald gibt.</li>
+      <li>Landet er am oberen Ende, muss er hinunter. Das zeigt, was ohne Wald passieren würde.</li>
+    </ul>
+    <h3>Spielende</h3>
+    <ul class="regeln">
+      <li>Wer als Erster das Ziel auf Feld <span data-goal>36</span> erreicht, gewinnt das Spiel. Dafür muss man nicht genau auf dem Ziel landen.</li>
     </ul>
     <h3>Quellen der Zahlen</h3>
     <ul class="quellen" id="sources"></ul>

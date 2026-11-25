@@ -1,6 +1,8 @@
 name: Wald-Leiternspiel online stellen
 
 # Einmalig nötig: Settings -> Pages -> Source: "GitHub Actions".
+# Das Feld "Custom domain" bleibt leer: Das Spiel liegt unter
+# https://248games.github.io/WaldSpiel/
 on:
   push:
     branches: [main]
@@ -23,10 +25,58 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Regeln testen
+        run: npm test
       - name: Spiel zusammenstellen
-        run: mkdir _site && cp -r index.html style.css js fonts _site/
+        run: |
+          mkdir _site
+          cp -r index.html style.css js fonts _site/
+          echo "$GITHUB_SHA" > _site/version.txt
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Ruft die Seite von außen ab und prüft, ob dort wirklich diese Version
+  # ankommt, und zwar unter der github.io-Adresse (ohne Umleitung).
+  check:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      SITE: https://248games.github.io/WaldSpiel/
+    steps:
+      - name: Seite abrufen und prüfen
+        run: |
+          got=''
+          for i in $(seq 1 30); do
+            got=$(curl -fsSL "${SITE}version.txt?t=${GITHUB_RUN_ID}-$i" || true)
+            if [ "$got" = "$GITHUB_SHA" ]; then echo "Version $got ist online."; break; fi
+            echo "Versuch $i: neue Version noch nicht da (gelesen: '${got:0:40}')"
+            sleep 10
+          done
+          if [ "$got" != "$GITHUB_SHA" ]; then
+            echo "::error::Unter $SITE kommt nicht die neue Version an."
+            exit 1
+          fi
+
+          result=$(curl -sSL -o page.html -w '%{http_code} %{url_effective}' "${SITE}?t=${GITHUB_RUN_ID}")
+          echo "Startseite: $result"
+          case "$result" in
+            "200 ${SITE}"*) ;;
+            *) echo "::error::Die Startseite antwortet nicht mit 200 unter $SITE (leitet eine Custom domain um?)."; exit 1 ;;
+          esac
+          grep -q '<title>Wald-Leiternspiel</title>' page.html || { echo "::error::Die Startseite ist nicht das Spiel."; exit 1; }
+
+          for file in style.css js/content.js js/game.js js/app.js \
+              fonts/lexend-latin-400-normal.woff2 fonts/lexend-latin-600-normal.woff2 \
+              fonts/alfa-slab-one-latin-400-normal.woff2; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "${SITE}${file}?t=${GITHUB_RUN_ID}")
+            echo "$code $file"
+            [ "$code" = 200 ] || { echo "::error::$file fehlt."; exit 1; }
+          done
+          echo "Alles da: $SITE"

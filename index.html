@@ -20,6 +20,7 @@
       <nav class="kopf__knoepfe" aria-label="Spiel">
         <button type="button" class="knopf" id="btn-rules">Regeln</button>
         <button type="button" class="knopf" id="btn-conclusion">Fazit</button>
+        <button type="button" class="knopf" id="btn-prompts">KI-Prompts</button>
         <button type="button" class="knopf" id="btn-new">Neues Spiel</button>
       </nav>
     </header>
@@ -209,6 +210,15 @@
     </ul>
     <h3>Quellen der Zahlen</h3>
     <ul class="quellen" id="sources"></ul>
+    <div class="dlg__knoepfe">
+      <button type="button" class="knopf knopf--haupt" data-close>Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-prompts" class="dlg dlg--breit" aria-labelledby="prompts-title">
+    <h2 class="dlg__titel" id="prompts-title" tabindex="-1" autofocus>KI-Prompts</h2>
+    <p>Diese Prompts haben wir für das Projekt an eine KI geschickt. Sie stehen hier wörtlich, so wie wir sie eingegeben haben.</p>
+    <ol class="prompts" id="prompts"></ol>
     <div class="dlg__knoepfe">
       <button type="button" class="knopf knopf--haupt" data-close>Schließen</button>
     </div>

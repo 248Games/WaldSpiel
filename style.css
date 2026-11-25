@@ -1132,6 +1132,29 @@ input {
   color: var(--tinte-leise);
 }
 
+.prompts {
+  display: grid;
+  gap: 12px;
+}
+
+.prompts__text {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 4px solid var(--gruen);
+  border-radius: 6px;
+  background: var(--flaeche-tief);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--t-leise);
+  overflow-wrap: anywhere;
+}
+
+.prompts__zweck {
+  display: block;
+  margin-top: 4px;
+  color: var(--tinte-leise);
+  font-size: var(--t-leise);
+}
+
 /* Handy */
 
 @media (max-width: 59.99rem) {
